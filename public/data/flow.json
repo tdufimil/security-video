@@ -1,0 +1,46 @@
+[
+  {
+    "type": "video",
+    "id": "intro",
+    "src": "/video/start.mp4",
+    "next": "quiz1"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz1",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "choices": ["フィッシング詐欺", "ワンクリック詐欺", "サポート詐欺"],
+    "correct": ["サポート詐欺"],
+    "videoCorrect": "/video/correct1.mp4",
+    "videoWrong": "/video/wrong1.mp4",
+    "next": "bridge"
+  },
+  {
+    "type": "video",
+    "id": "bridge",
+    "src": "/video/bridge.mp4",
+    "next": "quiz2"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz2",
+    "question": "この画面ではどの操作をすべき？",
+    "image": "/images/scam_ui.png",
+    "choices": ["再起動", "電話", "遠隔操作", "ESC"],
+    "correct": ["再起動", "ESC"],
+    "videoCorrect": "/video/correct2.mp4",
+    "videoWrong": "/video/wrong2.mp4",
+    "retryOnFail": true,
+    "next": "done"
+  },
+  {
+    "type": "video",
+    "id": "wrong2",
+    "src": "/video/wrong2.mp4",
+    "next": "quiz2"
+  },
+  {
+    "type": "end",
+    "id": "done"
+  }
+]
