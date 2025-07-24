@@ -1,25 +1,36 @@
+"use client";
 import { useEffect, useRef, useState } from "react";
 
-export default function FakeSupportScamScreen({ onResult }: { onResult: (correct: boolean) => void }) {
+type Props = {
+  onResult: (correct: boolean) => void;
+};
+
+export default function FakeSupportScamScreen({ onResult }: Props) {
+  // メインウィンドウだけ増殖
   const [mainWindows, setMainWindows] = useState([
     { id: 1, top: 120, left: 240 }
   ]);
-  const escTimer = useRef<NodeJS.Timeout | null>(null);
   const [pressingEsc, setPressingEsc] = useState(false);
+  const escTimer = useRef<NodeJS.Timeout | null>(null);
+ const [showCount,setShowCount]=useState<number>(0);
 
   useEffect(() => {
+    if (mainWindows.length >= 3) return; // 3個まで
     const interval = setInterval(() => {
-      setMainWindows(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          top: Math.random() * 350 + 50,
-          left: Math.random() * 400 + 50
-        }
-      ]);
+      setMainWindows(prev => {
+        if (prev.length >= 3) return prev; // 再度ガード
+        return [
+          ...prev,
+          {
+            id: Date.now(),
+            top: Math.random() * 350 + 50,
+            left: Math.random() * 400 + 50
+          }
+        ];
+      });
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [mainWindows.length]); 
 
   // ESC長押し判定
   useEffect(() => {
@@ -58,6 +69,9 @@ export default function FakeSupportScamScreen({ onResult }: { onResult: (correct
       className="fixed inset-0 z-50 bg-black/25 flex items-center justify-center font-['Meiryo','Segoe UI',sans-serif] select-none"
       style={{ backdropFilter: "blur(2px)" }}
     >
+      {/* ★ サウンドをループ再生（モーダル表示中のみ） */}
+      <audio src="/sound/sound1.mp3" autoPlay loop />
+
       {/* メインウィンドウ増殖 */}
       {mainWindows.map((w, idx) => (
         <div
@@ -162,7 +176,7 @@ export default function FakeSupportScamScreen({ onResult }: { onResult: (correct
   );
 }
 
-// Windowsっぽいアイコン例（SVGでも画像でもOK）
+// アイコン部分は同じです
 function WindowsIcon() {
   return (
     <svg viewBox="0 0 32 32" width={28} height={28}>

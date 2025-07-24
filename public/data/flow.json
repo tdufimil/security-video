@@ -26,7 +26,7 @@
     "id": "quiz2",
     "question": "この画面ではどの操作をすべき？",
     "image": "/images/scam_ui.png",
-    "choices": ["再起動", "電話", "遠隔操作", "ESC"],
+    "choices": ["再起動", "電話", "見てもらう", "ESC"],
     "correct": ["再起動", "ESC"],
     "videoCorrect": "/video/correct2.mp4",
     "videoWrong": "/video/wrong2.mp4",
