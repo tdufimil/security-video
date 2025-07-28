@@ -1,17 +1,19 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 環境構築方法
 
 ## Getting Started
-
-First, run the development server:
-
-```bash
+1.はじめにクローンしたプロジェクトに移動するために下記のコマンドを実行してください
+```
+cd security-video
+```
+2.セットアップ
+```
+npm i
+```
+3.サーバー起動
+```
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
