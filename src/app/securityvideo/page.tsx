@@ -77,6 +77,7 @@ export default function InteractiveVideoPage() {
       ? currentQuiz.videoCorrect
       : currentQuiz.videoWrong;
     setShowQuiz(false);
+    setCurrentQuiz(null);
     setShouldPlayAfterLoad(true);
 
     if (!isCorrect) {
@@ -98,12 +99,14 @@ export default function InteractiveVideoPage() {
       ? currentQuiz.videoCorrect
       : currentQuiz.videoWrong;
     setShowQuiz(false);
+    setCurrentQuiz(null);
     setShouldPlayAfterLoad(true);
 
     if (!isCorrect && currentQuiz.id === "quiz2") {
       setCurrentId("wrong2");
       setRetryAfterWrongQuiz2(true);
       setVideoSrc(nextVideo);
+      setCurrentQuiz(null);
       return;
     }
 
@@ -144,11 +147,11 @@ export default function InteractiveVideoPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      {/* ✅ quiz2 のときのみ背景画像を表示 */}
-      {currentQuiz?.id === "quiz2" && (
+      {/*  quiz2 のときのみ背景画像を表示 */}
+      {showQuiz && currentQuiz?.id === "quiz2" && (
         <div className="absolute inset-0 z-0">
           <img
-            src="/images/mrcl-screenshot.jpg" // ← 適宜パスを調整してください
+            src="/images/mrcl-screenshot.jpg"
             alt="mrcl screenshot background"
             className="w-full h-full object-cover"
           />
