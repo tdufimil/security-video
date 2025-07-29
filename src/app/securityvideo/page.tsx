@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { FlowStep } from "../../../types/FlowStep";
 import QuizModal from "../components/QuizModal";
 import FakeSupportScamScreen from "../components/FakeSupportScamScreen";
+import FakeScanProgress from "../components/FakeScanProgress";
+import NotifyPopup from "../components/NotifyPopup";
 
 export default function InteractiveVideoPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -16,6 +18,7 @@ export default function InteractiveVideoPage() {
   const [pendingNextId, setPendingNextId] = useState<string | null>(null);
   const [retryQuizId, setRetryQuizId] = useState<string | null>(null);
   const [retryAfterWrongQuiz2, setRetryAfterWrongQuiz2] = useState(false);
+  const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
 
   useEffect(() => {
     fetch("/data/flow.json")
@@ -30,16 +33,19 @@ export default function InteractiveVideoPage() {
     if (step.type === "video") {
       setVideoSrc(step.src);
       setShowQuiz(false);
-      console.log("再生する動画:", step.src);
     } else if (step.type === "quiz") {
-      setCurrentQuiz(step);
-      setShowQuiz(true);
+      if (step.id === "quiz2") {
+        setShowFullscreenPrompt(true);
+      } else {
+        setCurrentQuiz(step);
+        setShowQuiz(true);
+      }
     }
   }, [currentId, flow]);
 
   const handleVideoEnd = () => {
     if (retryAfterWrongQuiz2 && currentId === "wrong2") {
-      setCurrentId("quiz2");
+      setShowFullscreenPrompt(true);
       setRetryAfterWrongQuiz2(false);
       return;
     }
@@ -59,22 +65,13 @@ export default function InteractiveVideoPage() {
     }
   };
 
-  // quiz2用の専用判定ロジック
   const handleQuiz2Result = (isCorrect: boolean) => {
-    if (
-      !currentQuiz ||
-      currentQuiz.type !== "quiz" ||
-      currentQuiz.id !== "quiz2"
-    )
-      return;
-    const nextVideo = isCorrect
-      ? currentQuiz.videoCorrect
-      : currentQuiz.videoWrong;
+    if (!currentQuiz || currentQuiz.type !== "quiz" || currentQuiz.id !== "quiz2") return;
 
+    const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
     setShowQuiz(false);
     setShouldPlayAfterLoad(true);
 
-    // quiz2だけ不正解で動画→再度クイズ2ループ
     if (!isCorrect) {
       setCurrentId("wrong2");
       setRetryAfterWrongQuiz2(true);
@@ -84,23 +81,17 @@ export default function InteractiveVideoPage() {
 
     setVideoSrc(nextVideo);
     setPendingNextId(currentQuiz.next);
-    console.log("クイズ2の回答に基づく動画:", nextVideo);
   };
 
-  // quiz1その他クイズ用
   const handleQuizAnswered = (selected: string) => {
     if (currentQuiz?.type !== "quiz") return;
 
     const isCorrect = currentQuiz.correct.includes(selected);
-    const nextVideo = isCorrect
-      ? currentQuiz.videoCorrect
-      : currentQuiz.videoWrong;
-
+    const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
     setShowQuiz(false);
     setShouldPlayAfterLoad(true);
 
     if (!isCorrect && currentQuiz.id === "quiz2") {
-      // 通常ここは通らない、FakeSupportScamScreenで判定するので保険
       setCurrentId("wrong2");
       setRetryAfterWrongQuiz2(true);
       setVideoSrc(nextVideo);
@@ -114,12 +105,34 @@ export default function InteractiveVideoPage() {
     } else {
       setPendingNextId(currentQuiz.next);
     }
+  };
 
-    console.log("クイズの回答に基づく動画:", nextVideo);
+  const enterFullscreenAndStartQuiz2 = () => {
+    const doc = document;
+    const docEl = document.documentElement;
+    const requestFullScreen =
+      docEl.requestFullscreen ||
+      (docEl as any).webkitRequestFullscreen ||
+      (docEl as any).mozRequestFullScreen ||
+      (docEl as any).msRequestFullscreen;
+
+    if (
+      !doc.fullscreenElement &&
+      !(doc as any).webkitFullscreenElement &&
+      !(doc as any).mozFullScreenElement &&
+      !(doc as any).msFullscreenElement
+    ) {
+      requestFullScreen.call(docEl);
+    }
+
+    setShowFullscreenPrompt(false);
+    setCurrentQuiz(flow.find((s) => s.id === "quiz2") || null);
+    setShowQuiz(true);
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="relative w-screen h-screen overflow-hidden">
+      {/* 🎥 動画再生エリア */}
       {videoSrc && (
         <video
           ref={videoRef}
@@ -133,13 +146,36 @@ export default function InteractiveVideoPage() {
           }}
           controls
           autoPlay
-          className="w-screen h-screen object-cover"
+          className="w-full h-full object-cover"
         />
       )}
-      {showQuiz &&
-      currentQuiz?.type === "quiz" &&
-      currentQuiz.id === "quiz2" ? (
-        <FakeSupportScamScreen onResult={handleQuiz2Result} />
+
+      {/* ▶️ quiz2へ進む全画面ボタン */}
+      {showFullscreenPrompt && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
+          <button
+            onClick={enterFullscreenAndStartQuiz2}
+            className="px-6 py-3 bg-blue-600 text-white text-lg font-semibold rounded shadow hover:bg-blue-700"
+          >
+            クイズを始める（全画面表示）
+          </button>
+        </div>
+      )}
+
+      {/* ❓ クイズ or サポート詐欺UI */}
+      {showQuiz && currentQuiz?.id === "quiz2" ? (
+        <>
+          <FakeSupportScamScreen
+            onResult={handleQuiz2Result}
+            videoWrongUrl={currentQuiz.videoWrong!}
+            setVideoSrc={setVideoSrc}
+            setShowQuiz={setShowQuiz}
+            setCurrentId={setCurrentId}
+            setRetryAfterWrongQuiz2={setRetryAfterWrongQuiz2}
+          />
+          <FakeScanProgress onComplete={() => {}} />
+          <NotifyPopup />
+        </>
       ) : (
         showQuiz &&
         currentQuiz?.type === "quiz" && (

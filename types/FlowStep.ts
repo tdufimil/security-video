@@ -9,13 +9,13 @@ export type FlowStep =
       type: "quiz";
       id: string;
       question: string;
-      image?: string;
       choices: string[];
       correct: string[];
       videoCorrect: string;
-      videoWrong: string | null;
-      retryOnFail?: boolean;
+      videoWrong: string;
       next: string;
+      image?: string;
+      retryOnFail?: boolean;
     }
   | {
       type: "end";

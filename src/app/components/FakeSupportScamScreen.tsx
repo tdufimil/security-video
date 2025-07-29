@@ -1,43 +1,70 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
   onResult: (correct: boolean) => void;
+  videoWrongUrl: string; // ← string型に確定
+  setVideoSrc: (src: string) => void;
+  setShowQuiz: (show: boolean) => void;
+  setCurrentId: (id: string) => void;
+  setRetryAfterWrongQuiz2: (val: boolean) => void;
 };
 
-export default function FakeSupportScamScreen({ onResult }: Props) {
-  // メインウィンドウだけ増殖
-  const [mainWindows, setMainWindows] = useState([
-    { id: 1, top: 120, left: 240 }
-  ]);
+export default function FakeSupportScamScreen({
+  onResult,
+  videoWrongUrl,
+  setVideoSrc,
+  setShowQuiz,
+  setCurrentId,
+  setRetryAfterWrongQuiz2,
+}: Props) {
+  const [mainWindows, setMainWindows] = useState([{ id: 1, top: 120, left: 240 }]);
   const [pressingEsc, setPressingEsc] = useState(false);
   const escTimer = useRef<NodeJS.Timeout | null>(null);
- const [showCount,setShowCount]=useState<number>(0);
+
+  const enterFullscreen = () => {
+    const elem = document.documentElement;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    }
+  };
+
+  const exitFullscreen = () => {
+    if (document.exitFullscreen) {
+      return document.exitFullscreen();
+    }
+    return Promise.resolve();
+  };
+
+  const exitFullscreenAndFail = async () => {
+  try {
+    if (document.fullscreenElement) {
+      await exitFullscreen();
+    }
+  } catch (err) {
+    console.warn("フルスクリーン解除失敗:", err);
+  }
+
+  setShowQuiz(false);
+  setVideoSrc(videoWrongUrl); // ✅ 正確に渡された URL を使用
+  setCurrentId("wrong2");
+  setRetryAfterWrongQuiz2(true);
+};
 
   useEffect(() => {
-    if (mainWindows.length >= 3) return; // 3個まで
-    const interval = setInterval(() => {
-      setMainWindows(prev => {
-        if (prev.length >= 3) return prev; // 再度ガード
-        return [
-          ...prev,
-          {
-            id: Date.now(),
-            top: Math.random() * 350 + 50,
-            left: Math.random() * 400 + 50
-          }
-        ];
-      });
-    }, 1500);
-    return () => clearInterval(interval);
-  }, [mainWindows.length]); 
+    enterFullscreen();
+    return () => {
+      if (document.fullscreenElement) exitFullscreen();
+    };
+  }, []);
 
-  // ESC長押し判定
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !pressingEsc) {
         setPressingEsc(true);
         escTimer.current = setTimeout(() => {
+          if (document.fullscreenElement) exitFullscreen();
           onResult(true); // 正解
         }, 1200);
       }
@@ -56,142 +83,113 @@ export default function FakeSupportScamScreen({ onResult }: Props) {
     };
   }, [onResult, pressingEsc]);
 
-  const handleCall = () => onResult(false);
-  const handleRemote = () => {
-    if (window.confirm("本当に遠隔操作を許可しますか？")) {
-      onResult(false);
-    }
-  };
-  const handleRestart = () => onResult(true);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMainWindows((prev) =>
+        prev.length < 3
+          ? [
+              ...prev,
+              {
+                id: Date.now(),
+                top: Math.random() * 350 + 50,
+                left: Math.random() * 400 + 50,
+              },
+            ]
+          : prev
+      );
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/25 flex items-center justify-center font-['Meiryo','Segoe UI',sans-serif] select-none"
-      style={{ backdropFilter: "blur(2px)" }}
-    >
-      {/* ★ サウンドをループ再生（モーダル表示中のみ） */}
-      <audio src="/sound/sound1.mp3" autoPlay loop />
+    <div className="fixed inset-0 z-50">
+      <div className="absolute inset-0" style={{ zIndex: 10 }}>
+        <audio src="/sound/sound1.mp3" autoPlay loop />
+        <audio src="/sound/armored.mp3" autoPlay loop />
 
-      {/* メインウィンドウ増殖 */}
-      {mainWindows.map((w, idx) => (
+        {mainWindows.map((w, idx) => (
+          <div
+            key={w.id}
+            className="absolute min-w-[410px] max-w-[90vw] shadow-2xl rounded border border-gray-400 pointer-events-auto"
+            style={{
+              zIndex: 1000 + idx,
+              top: w.top,
+              left: w.left,
+              background: "white",
+              textAlign: "center",
+            }}
+          >
+            <div className="flex items-center justify-between px-3 h-8 bg-[#2074d4] rounded-t border-b border-blue-900">
+              <div className="text-white text-xs font-bold tracking-widest">
+                Windows セキュリティの警告
+              </div>
+              <button className="text-white w-6 h-6 flex items-center justify-center hover:bg-blue-800 rounded font-bold">
+                ×
+              </button>
+            </div>
+
+            <div className="px-6 pt-4 pb-3 text-sm text-left">
+              <div className="text-lg font-bold text-red-600 mb-1">
+                Microsoft Windows ファイアウォールの警告！
+              </div>
+              <div className="font-semibold mb-1">
+                トロイの木馬型スパイウェアに感染したPC
+                <span className="ml-2 text-xs text-gray-600 font-mono">
+                  (エラーコード: 2V7HGTVB)
+                </span>
+              </div>
+              <div className="mb-1">
+                このPCへのアクセスはセキュリティ上の理由からブロックされています。
+                <br />
+                <a
+                  href="#"
+                  className="text-blue-700 underline font-bold"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    await exitFullscreenAndFail();
+                  }}
+                >
+                  Windows サポートに電話してください : (0101)
+                </a>
+              </div>
+              <img
+                src="/images/re.gif"
+                alt="再起動中"
+                className="mt-2 w-[300px]"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 px-6 pb-3">
+              <button className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-gray-100 shadow text-base font-semibold hover:bg-gray-200">
+                キャンセル
+              </button>
+              <button className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-blue-500 text-white shadow font-semibold hover:bg-blue-600">
+                OK
+              </button>
+            </div>
+          </div>
+        ))}
+
         <div
-          key={w.id}
-          className="absolute min-w-[410px] max-w-[90vw] shadow-2xl rounded border border-gray-400"
-          style={{
-            zIndex: 1000 + idx,
-            top: w.top,
-            left: w.left,
-            background: "linear-gradient(180deg, #f6f7f9 85%, #e1e5ee 100%)",
+          className="absolute bg-black/90 text-white rounded-xl shadow-xl p-3 text-xs font-bold"
+          style={{ top: 20, left: 50, width: 310, zIndex: 2000 }}
+        >
+          すぐに当社に電話してください。当社のエンジニアが対応を開始しています...
+        </div>
+
+        <div
+          className="fixed left-0 bottom-0 w-full h-12 bg-blue-900 text-white flex items-center px-8 text-sm z-[2100]"
+          onClick={async () => {
+            await exitFullscreenAndFail();
           }}
         >
-          {/* タイトルバー */}
-          <div className="flex items-center justify-between px-3 h-8 bg-[#2074d4] rounded-t border-b border-blue-900">
-            <div className="text-white text-xs font-bold tracking-widest">Windows セキュリティの警告</div>
-            <button className="text-white w-6 h-6 flex items-center justify-center hover:bg-blue-800 rounded" style={{fontWeight: "bold"}}>
-              ×
-            </button>
-          </div>
-          {/* 内容エリア */}
-          <div className="px-6 pt-4 pb-3 text-sm text-left">
-            <div className="text-lg font-bold text-red-600 mb-1">
-              Microsoft Windows ファイアウォールの警告！
-            </div>
-            <div className="font-semibold mb-1">
-              トロイの木馬型スパイウェアに感染したPC
-              <span className="ml-2 text-xs text-gray-600 font-mono">(エラーコード: 2V7HGTVB)</span>
-            </div>
-            <div className="mb-1">
-              <span className="inline-block w-7 h-7 align-middle mr-1"><WindowsIcon /></span>
-              <span className="inline-block w-7 h-7 align-middle"><ShieldIcon /></span>
-            </div>
-            <div className="mb-1">
-              このPCへのアクセスはセキュリティ上の理由からブロックされています。<br />
-              <a
-                href="tel:0120-000-000"
-                className="text-blue-700 underline font-bold"
-                onClick={e => {e.preventDefault(); handleCall();}}
-              >
-                Windows サポートに電話してください : (0101)
-              </a>
-            </div>
-          </div>
-          {/* ボタン */}
-          <div className="flex justify-end gap-2 px-6 pb-3">
-            <button
-              className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-gray-100 shadow text-base font-semibold hover:bg-gray-200"
-              onClick={() => {}}
-            >
-              キャンセル
-            </button>
-            <button
-              className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-blue-500 text-white shadow font-semibold hover:bg-blue-600"
-              onClick={() => {}}
-            >
-              OK
-            </button>
-          </div>
-          <div className="flex justify-end gap-2 px-6 pb-5">
-            <button
-              className="text-base px-5 py-1 rounded border border-green-600 bg-green-700 text-white font-bold shadow hover:bg-green-800"
-              onClick={handleRestart}
-            >
-              再起動する
-            </button>
-            <button
-              className="text-base px-5 py-1 rounded border border-orange-600 bg-orange-600 text-white font-bold shadow hover:bg-orange-700"
-              onClick={handleRemote}
-            >
-              遠隔操作を許可
-            </button>
-          </div>
+          Windows のセキュリティ　Windows サポートに電話する: (0101)
         </div>
-      ))}
 
-      {/* 黒アラート1回だけ */}
-      <div
-        className="absolute bg-black/90 text-white rounded-xl shadow-xl p-3 text-xs font-bold"
-        style={{
-          top: 20,
-          left: 50,
-          width: 310,
-          zIndex: 2000,
-        }}
-      >
-        すぐに当社に電話してください。当社のエンジニアが対応を開始しています...
-      </div>
-
-      {/* フッター青帯 */}
-      <div
-        className="fixed left-0 bottom-0 w-full h-12 bg-blue-900 text-white flex items-center px-8 text-sm"
-        style={{ zIndex: 2100 }}
-      >
-        Windows のセキュリティ　Windows サポートに電話する: (0101)
-      </div>
-
-      {/* ESC長押しヒント */}
-      <div className="fixed bottom-10 left-10 text-xl text-white bg-black/70 px-5 py-2 rounded-lg pointer-events-none">
-        ESCキーを1秒以上長押しでウィンドウを閉じる
+        <div className="fixed bottom-10 left-10 text-xl text-white bg-black/70 px-5 py-2 rounded-lg pointer-events-none">
+          ESCキーを1秒以上長押しでウィンドウを閉じる
+        </div>
       </div>
     </div>
-  );
-}
-
-// アイコン部分は同じです
-function WindowsIcon() {
-  return (
-    <svg viewBox="0 0 32 32" width={28} height={28}>
-      <rect x="1" y="6" width="13" height="9" fill="#2983ee"/>
-      <rect x="1" y="17" width="13" height="9" fill="#1e65c7"/>
-      <rect x="16" y="5" width="15" height="11" fill="#2983ee"/>
-      <rect x="16" y="17" width="15" height="10" fill="#1e65c7"/>
-    </svg>
-  );
-}
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 32 32" width={28} height={28}>
-      <path d="M16 3C9 6 3 8 3 8s0 12.7 6.9 17.4C13.7 28.1 16 29 16 29s2.3-.9 6.1-3.6C29 20.7 29 8 29 8s-6-2-13-5z" fill="#67d7f5"/>
-      <path d="M16 5.6V27c-.5-.3-1.6-.8-2.9-1.9C7.2 20.7 6 11 6 9.2c2.3-.7 6.1-2.3 10-4.1z" fill="#23a4dd"/>
-    </svg>
   );
 }
