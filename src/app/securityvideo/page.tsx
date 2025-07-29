@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { FlowStep } from "../../../types/FlowStep";
+import { FlowStep, QuizStep } from "../../../types/FlowStep";
 import QuizModal from "../components/QuizModal";
 import FakeSupportScamScreen from "../components/FakeSupportScamScreen";
 import FakeScanProgress from "../components/FakeScanProgress";
 import NotifyPopup from "../components/NotifyPopup";
+
+// 型ガード関数を追加
+function isQuizStep(step: FlowStep): step is QuizStep {
+  return step.type === "quiz";
+}
 
 export default function InteractiveVideoPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -13,7 +18,7 @@ export default function InteractiveVideoPage() {
   const [currentId, setCurrentId] = useState("intro");
   const [videoSrc, setVideoSrc] = useState<string | null>("");
   const [showQuiz, setShowQuiz] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<FlowStep | null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<QuizStep | null>(null);
   const [shouldPlayAfterLoad, setShouldPlayAfterLoad] = useState(false);
   const [pendingNextId, setPendingNextId] = useState<string | null>(null);
   const [retryQuizId, setRetryQuizId] = useState<string | null>(null);
@@ -36,7 +41,7 @@ export default function InteractiveVideoPage() {
     } else if (step.type === "quiz") {
       if (step.id === "quiz2") {
         setShowFullscreenPrompt(true);
-      } else {
+      } else if (isQuizStep(step)) {
         setCurrentQuiz(step);
         setShowQuiz(true);
       }
@@ -66,7 +71,7 @@ export default function InteractiveVideoPage() {
   };
 
   const handleQuiz2Result = (isCorrect: boolean) => {
-    if (!currentQuiz || currentQuiz.type !== "quiz" || currentQuiz.id !== "quiz2") return;
+    if (!currentQuiz || currentQuiz.id !== "quiz2") return;
 
     const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
     setShowQuiz(false);
@@ -84,7 +89,7 @@ export default function InteractiveVideoPage() {
   };
 
   const handleQuizAnswered = (selected: string) => {
-    if (currentQuiz?.type !== "quiz") return;
+    if (!currentQuiz) return;
 
     const isCorrect = currentQuiz.correct.includes(selected);
     const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
@@ -126,8 +131,11 @@ export default function InteractiveVideoPage() {
     }
 
     setShowFullscreenPrompt(false);
-    setCurrentQuiz(flow.find((s) => s.id === "quiz2") || null);
-    setShowQuiz(true);
+    const quiz2 = flow.find((s) => s.id === "quiz2");
+    if (quiz2 && isQuizStep(quiz2)) {
+      setCurrentQuiz(quiz2);
+      setShowQuiz(true);
+    }
   };
 
   return (
@@ -167,7 +175,7 @@ export default function InteractiveVideoPage() {
         <>
           <FakeSupportScamScreen
             onResult={handleQuiz2Result}
-            videoWrongUrl={currentQuiz.videoWrong!}
+            videoWrongUrl={currentQuiz.videoWrong}
             setVideoSrc={setVideoSrc}
             setShowQuiz={setShowQuiz}
             setCurrentId={setCurrentId}
@@ -178,7 +186,7 @@ export default function InteractiveVideoPage() {
         </>
       ) : (
         showQuiz &&
-        currentQuiz?.type === "quiz" && (
+        currentQuiz && (
           <QuizModal
             isOpen={showQuiz}
             question={currentQuiz.question}
