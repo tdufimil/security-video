@@ -73,7 +73,9 @@ export default function InteractiveVideoPage() {
   const handleQuiz2Result = (isCorrect: boolean) => {
     if (!currentQuiz || currentQuiz.id !== "quiz2") return;
 
-    const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
+    const nextVideo = isCorrect
+      ? currentQuiz.videoCorrect
+      : currentQuiz.videoWrong;
     setShowQuiz(false);
     setShouldPlayAfterLoad(true);
 
@@ -92,7 +94,9 @@ export default function InteractiveVideoPage() {
     if (!currentQuiz) return;
 
     const isCorrect = currentQuiz.correct.includes(selected);
-    const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
+    const nextVideo = isCorrect
+      ? currentQuiz.videoCorrect
+      : currentQuiz.videoWrong;
     setShowQuiz(false);
     setShouldPlayAfterLoad(true);
 
@@ -140,6 +144,17 @@ export default function InteractiveVideoPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
+      {/* ✅ quiz2 のときのみ背景画像を表示 */}
+      {currentQuiz?.id === "quiz2" && (
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/mrcl-screenshot.jpg" // ← 適宜パスを調整してください
+            alt="mrcl screenshot background"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* 🎥 動画再生エリア */}
       {videoSrc && (
         <video
