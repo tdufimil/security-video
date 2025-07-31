@@ -40,6 +40,11 @@
     "next": "quiz2"
   },
   {
+    "type": "video",
+    "id": "wrong3",
+    "src": "/video/wrong3.mp4"
+  },
+  {
     "type": "end",
     "id": "done"
   }

@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 type Props = {
   onResult: (correct: boolean) => void;
-  videoWrongUrl: string; // ← string型に確定
+  videoWrongUrl: string;
   setVideoSrc: (src: string) => void;
   setShowQuiz: (show: boolean) => void;
   setCurrentId: (id: string) => void;
   setRetryAfterWrongQuiz2: (val: boolean) => void;
+  wrongCount: number;
+  setWrongCount: (count: number) => void;
 };
 
 export default function FakeSupportScamScreen({
@@ -18,10 +20,17 @@ export default function FakeSupportScamScreen({
   setShowQuiz,
   setCurrentId,
   setRetryAfterWrongQuiz2,
+  wrongCount,
+  setWrongCount,
 }: Props) {
-  const [mainWindows, setMainWindows] = useState([{ id: 1, top: 120, left: 240 }]);
+  const [mainWindows, setMainWindows] = useState([
+    { id: 1, top: 120, left: 240 },
+  ]);
   const [pressingEsc, setPressingEsc] = useState(false);
   const escTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const sound1Ref = useRef<HTMLAudioElement | null>(null);
+  const sound2Ref = useRef<HTMLAudioElement | null>(null);
 
   const enterFullscreen = () => {
     const elem = document.documentElement;
@@ -38,19 +47,28 @@ export default function FakeSupportScamScreen({
   };
 
   const exitFullscreenAndFail = async () => {
-  try {
-    if (document.fullscreenElement) {
-      await exitFullscreen();
+    try {
+      if (document.fullscreenElement) {
+        await exitFullscreen();
+      }
+    } catch (err) {
+      console.warn("フルスクリーン解除失敗:", err);
     }
-  } catch (err) {
-    console.warn("フルスクリーン解除失敗:", err);
-  }
 
-  setShowQuiz(false);
-  setVideoSrc(videoWrongUrl); // ✅ 正確に渡された URL を使用
-  setCurrentId("wrong2");
-  setRetryAfterWrongQuiz2(true);
-};
+    const newWrongCount = wrongCount + 1;
+    const nextVideo = newWrongCount >= 2 ? "/video/wrong3.mp4" : videoWrongUrl;
+    const nextId = newWrongCount >= 2 ? "wrong3" : "wrong2";
+
+    console.log("[FakeSupportScamScreen] 再生する動画:", nextVideo);
+    setShowQuiz(false);
+    setVideoSrc(nextVideo);
+    setCurrentId(nextId);
+    setWrongCount(newWrongCount);
+
+    if (nextId === "wrong2") {
+      setRetryAfterWrongQuiz2(true);
+    }
+  };
 
   useEffect(() => {
     enterFullscreen();
@@ -65,16 +83,18 @@ export default function FakeSupportScamScreen({
         setPressingEsc(true);
         escTimer.current = setTimeout(() => {
           if (document.fullscreenElement) exitFullscreen();
-          onResult(true); // 正解
-        }, 1200);
+          onResult(true);
+        }, 900);
       }
     };
+
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setPressingEsc(false);
         if (escTimer.current) clearTimeout(escTimer.current);
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
     return () => {
@@ -97,15 +117,55 @@ export default function FakeSupportScamScreen({
             ]
           : prev
       );
-    }, 1500);
+    }, 700);
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const volumeStep = 0.2;
+    const playbackRateStep = 0.2;
+    const maxVolume = 1.0;
+    const maxPlaybackRate = 3.0;
+
+    const interval = setInterval(() => {
+      const audio = sound1Ref.current;
+      if (!audio) return;
+
+      if (audio.volume < maxVolume) {
+        audio.volume = Math.min(maxVolume, audio.volume + volumeStep);
+      }
+
+      if (audio.playbackRate < maxPlaybackRate) {
+        audio.playbackRate = Math.min(
+          maxPlaybackRate,
+          audio.playbackRate + playbackRateStep
+        );
+      }
+
+      console.log(
+        `[sound1] volume: ${audio.volume.toFixed(
+          2
+        )}, playbackRate: ${audio.playbackRate.toFixed(2)}`
+      );
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log("[quiz2] 30秒経過により不正解扱い");
+      exitFullscreenAndFail();
+    }, 30000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50 container">
       <div className="absolute inset-0" style={{ zIndex: 10 }}>
-        <audio src="/sound/sound1.mp3" autoPlay loop />
-        <audio src="/sound/armored.mp3" autoPlay loop />
+        <audio ref={sound1Ref} src="/sound/sound1.mp3" autoPlay loop />
+        <audio ref={sound2Ref} src="/sound/armored.mp3" autoPlay loop />
 
         {mainWindows.map((w, idx) => (
           <div

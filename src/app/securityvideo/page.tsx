@@ -1,19 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FlowStep, QuizStep } from "../../../types/FlowStep";
 import QuizModal from "../components/QuizModal";
 import FakeSupportScamScreen from "../components/FakeSupportScamScreen";
 import FakeScanProgress from "../components/FakeScanProgress";
 import NotifyPopup from "../components/NotifyPopup";
 
-// 型ガード関数を追加
 function isQuizStep(step: FlowStep): step is QuizStep {
   return step.type === "quiz";
 }
 
 export default function InteractiveVideoPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const router = useRouter();
+
   const [flow, setFlow] = useState<FlowStep[]>([]);
   const [currentId, setCurrentId] = useState("intro");
   const [videoSrc, setVideoSrc] = useState<string | null>("");
@@ -23,7 +25,9 @@ export default function InteractiveVideoPage() {
   const [pendingNextId, setPendingNextId] = useState<string | null>(null);
   const [retryQuizId, setRetryQuizId] = useState<string | null>(null);
   const [retryAfterWrongQuiz2, setRetryAfterWrongQuiz2] = useState(false);
+  const [quiz2WrongCount, setQuiz2WrongCount] = useState(0);
   const [showFullscreenPrompt, setShowFullscreenPrompt] = useState(false);
+  const [showEndMessage, setShowEndMessage] = useState(false);
 
   useEffect(() => {
     fetch("/data/flow.json")
@@ -36,6 +40,7 @@ export default function InteractiveVideoPage() {
     if (!step) return;
 
     if (step.type === "video") {
+      console.log("Now playing video:", step.src);
       setVideoSrc(step.src);
       setShowQuiz(false);
     } else if (step.type === "quiz") {
@@ -49,23 +54,31 @@ export default function InteractiveVideoPage() {
   }, [currentId, flow]);
 
   const handleVideoEnd = () => {
+    if (currentId === "wrong3" || videoSrc?.includes("correct2.mp4")) {
+      setShowEndMessage(true);
+      return;
+    }
+
     if (retryAfterWrongQuiz2 && currentId === "wrong2") {
       setShowFullscreenPrompt(true);
       setRetryAfterWrongQuiz2(false);
       return;
     }
+
     if (pendingNextId) {
       setCurrentId(pendingNextId);
       setPendingNextId(null);
       return;
     }
+
     if (retryQuizId) {
       setCurrentId(retryQuizId);
       setRetryQuizId(null);
       return;
     }
+
     const step = flow.find((s) => s.id === currentId);
-    if (step?.type === "video") {
+    if (step?.type === "video" && step.next) {
       setCurrentId(step.next);
     }
   };
@@ -73,21 +86,25 @@ export default function InteractiveVideoPage() {
   const handleQuiz2Result = (isCorrect: boolean) => {
     if (!currentQuiz || currentQuiz.id !== "quiz2") return;
 
-    const nextVideo = isCorrect
-      ? currentQuiz.videoCorrect
-      : currentQuiz.videoWrong;
     setShowQuiz(false);
     setCurrentQuiz(null);
     setShouldPlayAfterLoad(true);
 
     if (!isCorrect) {
-      setCurrentId("wrong2");
-      setRetryAfterWrongQuiz2(true);
-      setVideoSrc(nextVideo);
+      if (quiz2WrongCount === 0) {
+        setQuiz2WrongCount(1);
+        setCurrentId("wrong2");
+        setVideoSrc(currentQuiz.videoWrong);
+        setRetryAfterWrongQuiz2(true);
+      } else {
+        setQuiz2WrongCount(2);
+        setCurrentId("wrong3");
+        setVideoSrc("/video/wrong3.mp4");
+      }
       return;
     }
 
-    setVideoSrc(nextVideo);
+    setVideoSrc(currentQuiz.videoCorrect);
     setPendingNextId(currentQuiz.next);
   };
 
@@ -95,21 +112,26 @@ export default function InteractiveVideoPage() {
     if (!currentQuiz) return;
 
     const isCorrect = currentQuiz.correct.includes(selected);
-    const nextVideo = isCorrect
-      ? currentQuiz.videoCorrect
-      : currentQuiz.videoWrong;
+
     setShowQuiz(false);
     setCurrentQuiz(null);
     setShouldPlayAfterLoad(true);
 
     if (!isCorrect && currentQuiz.id === "quiz2") {
-      setCurrentId("wrong2");
-      setRetryAfterWrongQuiz2(true);
-      setVideoSrc(nextVideo);
-      setCurrentQuiz(null);
+      if (quiz2WrongCount === 0) {
+        setQuiz2WrongCount(1);
+        setCurrentId("wrong2");
+        setVideoSrc(currentQuiz.videoWrong);
+        setRetryAfterWrongQuiz2(true);
+      } else {
+        setQuiz2WrongCount(2);
+        setCurrentId("wrong3");
+        setVideoSrc("/video/wrong3.mp4");
+      }
       return;
     }
 
+    const nextVideo = isCorrect ? currentQuiz.videoCorrect : currentQuiz.videoWrong;
     setVideoSrc(nextVideo);
 
     if (!isCorrect && currentQuiz.retryOnFail) {
@@ -134,7 +156,7 @@ export default function InteractiveVideoPage() {
       !(doc as any).mozFullScreenElement &&
       !(doc as any).msFullscreenElement
     ) {
-      requestFullScreen.call(docEl);
+      requestFullScreen?.call(docEl);
     }
 
     setShowFullscreenPrompt(false);
@@ -147,7 +169,6 @@ export default function InteractiveVideoPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden">
-      {/*  quiz2 のときのみ背景画像を表示 */}
       {showQuiz && currentQuiz?.id === "quiz2" && (
         <div className="absolute inset-0 z-0">
           <img
@@ -158,15 +179,15 @@ export default function InteractiveVideoPage() {
         </div>
       )}
 
-      {/* 🎥 動画再生エリア */}
       {videoSrc && (
         <video
           ref={videoRef}
           src={videoSrc}
           onEnded={handleVideoEnd}
           onLoadedData={() => {
-            if (shouldPlayAfterLoad) {
-              videoRef.current?.play();
+            if (shouldPlayAfterLoad && videoRef.current) {
+              videoRef.current.currentTime = 0;
+              videoRef.current.play();
               setShouldPlayAfterLoad(false);
             }
           }}
@@ -176,7 +197,6 @@ export default function InteractiveVideoPage() {
         />
       )}
 
-      {/* ▶️ quiz2へ進む全画面ボタン */}
       {showFullscreenPrompt && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70">
           <button
@@ -188,7 +208,6 @@ export default function InteractiveVideoPage() {
         </div>
       )}
 
-      {/* ❓ クイズ or サポート詐欺UI */}
       {showQuiz && currentQuiz?.id === "quiz2" ? (
         <>
           <FakeSupportScamScreen
@@ -198,6 +217,8 @@ export default function InteractiveVideoPage() {
             setShowQuiz={setShowQuiz}
             setCurrentId={setCurrentId}
             setRetryAfterWrongQuiz2={setRetryAfterWrongQuiz2}
+            wrongCount={quiz2WrongCount}
+            setWrongCount={setQuiz2WrongCount}
           />
           <FakeScanProgress onComplete={() => {}} />
           <NotifyPopup />
@@ -214,6 +235,21 @@ export default function InteractiveVideoPage() {
             onAnswer={handleQuizAnswered}
           />
         )
+      )}
+
+      {showEndMessage && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 text-white p-8 text-center space-y-6">
+          <p className="text-3xl font-bold">
+            ご視聴ありがとうございました！<br />
+            アンケートのご記入をお願いいたします。
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="mt-4 px-6 py-3 text-xl bg-white text-black font-semibold rounded hover:bg-gray-200 transition"
+          >
+            トップに戻る
+          </button>
+        </div>
       )}
     </div>
   );
