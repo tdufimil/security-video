@@ -1,0 +1,91 @@
+[
+  {
+    "type": "video",
+    "id": "start",
+    "src": "/video/correct1.mp4",
+    "next": "quiz1"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz1",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "options": [
+      { "id": "1", "option": "images/scam_top_image.png" },
+      { "id": "2", "option": "images/scam_top_image.png" }
+    ],
+    "correct": "1",
+    "nextId": "quiz2"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz1",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "options": [
+      { "id": "1", "option": "images/scam_top_image.png" },
+      { "id": "2", "option": "images/scam_top_image.png" }
+    ],
+    "correct": "1",
+    "nextId": "quiz2"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz2",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "options": [
+      { "id": "1", "option": "images/scam_top_image.png" },
+      { "id": "2", "option": "images/scam_top_image.png" }
+    ],
+    "correct": "1",
+    "nextId": "quiz3"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz3",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "options": [
+      { "id": "1", "option": "images/scam_top_image.png" },
+      { "id": "2", "option": "images/scam_top_image.png" }
+    ],
+    "correct": "1",
+    "nextId": "quiz4"
+  },
+  {
+    "type": "quiz",
+    "id": "quiz4",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "options": [
+      { "id": "1", "option": "images/scam_top_image.png" },
+      { "id": "2", "option": "images/scam_top_image.png" }
+    ],
+    "correct": "1",
+    "nextId": "demo"
+  },
+  {
+    "type": "demo",
+    "id": "demo",
+    "question": "この画面ではどの操作をすべき？",
+    "image": "/images/scam_ui.png",
+    "options": ["再起動", "電話", "見てもらう", "ESC"],
+    "correct": ["再起動", "ESC"],
+    "videoCorrect": "correct1",
+    "videoWrong": "wrong1",
+    "retryOnFail": true,
+    "nexId": "end"
+  },
+  {
+    "type": "video",
+    "id": "correct1",
+    "src": "/video/correct1.mp4",
+    "next": "end"
+  },
+  {
+    "type": "video",
+    "id": "wrong1",
+    "src": "/video/wrong1.mp4",
+    "next": "demo"
+  },
+  {
+    "type": "end",
+    "id": "end"
+  }
+]

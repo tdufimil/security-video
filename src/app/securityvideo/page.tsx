@@ -212,8 +212,6 @@ export default function InteractiveVideoPage() {
         <>
           <FakeSupportScamScreen
             onResult={handleQuiz2Result}
-            videoWrongUrl={currentQuiz.videoWrong}
-            setVideoSrc={setVideoSrc}
             setShowQuiz={setShowQuiz}
             setCurrentId={setCurrentId}
             setRetryAfterWrongQuiz2={setRetryAfterWrongQuiz2}

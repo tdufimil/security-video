@@ -1,5 +1,15 @@
 [
   {
+    "type": "quiz",
+    "id": "quiz1",
+    "question": "この画面の詐欺はどんな詐欺？",
+    "choices": ["フィッシング詐欺", "ワンクリック詐欺", "サポート詐欺"],
+    "correct": ["サポート詐欺"],
+    "videoCorrect": "/video/correct1.mp4",
+    "videoWrong": "/video/wrong1.mp4",
+    "next": "bridge"
+  },
+  {
     "type": "video",
     "id": "intro",
     "src": "/video/start.mp4",

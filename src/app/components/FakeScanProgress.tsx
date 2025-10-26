@@ -46,9 +46,9 @@ export default function FakeScanProgress({
     .padStart(2, "0");
 
   // 各位置指定（物理ピクセル）
-  const progressStyle = usePositionStyle(1100, 315, 740, 6);
-  const stat1Style = usePositionStyle(1100, 330, 700, 60);
-  const stat2Style = usePositionStyle(1100, 430, 700, 60);
+  const progressStyle = usePositionStyle(600, 315, 740, 6);
+  const stat1Style = usePositionStyle(600, 330, 700, 60);
+  const stat2Style = usePositionStyle(600, 430, 700, 60);
 
   return (
     <div className="fixed inset-y-0 right-0 z-0 flex items-start p-6 text-white font-sans select-none rounded-lg">
@@ -61,7 +61,7 @@ export default function FakeScanProgress({
             width: px(970),
             height: px(775),
             top: "0px",
-            left: "490px",
+            left: "300px",
           }}
           alt="Fake Scan Background"
         />

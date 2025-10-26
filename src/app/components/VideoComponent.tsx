@@ -1,38 +1,36 @@
-"use client";
+import { Dispatch, SetStateAction, useRef } from "react";
+import { Video } from "../../../hooks/useStepController";
 
-import React, { useRef, useState } from "react";
-import FirstSupportscamquizselection from "./FirstSupportscamquizselection";
+type Props = {
+  videoData: Video;
+  setCurrentId: Dispatch<SetStateAction<string>>;
+};
 
-export default function VideoComponent() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  // １つ目のクイズを表示するための状態
-  const [showFirstQuiz, setShowFirstQuiz] = useState(false);
 
-  const [nowVideoNumber, setNowVideoNumber] = useState<number>(1); // 再生されている動画の番号を管理
-  
-  // 動画終了時にクイズを表示する関数
-  const handleVideoEnd = () => {
-    setShowFirstQuiz(true); // 動画終了時にモーダル表示
-  };
 
-  const handleCloseModal = () => {
-    setShowFirstQuiz(false); // クイズ後にモーダルを閉じる
+export default function VideoComponent({ videoData, setCurrentId }: Props) {
+   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+    // 再生終了時の処理
+  const handleVideoEnded = () => {
+    console.log(videoData);
+    if (videoData.next) {
+      console.log(`[VideoComponent] 動画終了 → 次のステップへ: ${videoData.next}`);
+      setCurrentId(videoData.next);
+    } else {
+      console.warn("[VideoComponent] nextが未定義のため遷移できません");
+    }
   };
 
   return (
     <div className="flex flex-col items-center">
       <video
         ref={videoRef}
-        src="/video/サポート詐欺_相談窓口メイン.mp4"
+        src={videoData.src}
         controls
         autoPlay
-        muted
-        onEnded={handleVideoEnd}
         className="w-screen h-screen object-cover"
-      />
-      <FirstSupportscamquizselection
-        isOpen={showFirstQuiz}
-        onClose={handleCloseModal}
+        onEnded={handleVideoEnded}
       />
     </div>
   );
