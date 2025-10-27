@@ -14,7 +14,7 @@ export type QuizStep = {
   videoCorrect: string;
   videoWrong: string;
   next: string;
-  image?: string;
+  image?: string | string[];
   retryOnFail?: boolean;
 };
 

@@ -20,8 +20,8 @@ import {
 } from "../lib/scoreCalculator";
 
 export default function SecurityQuiz() {
-  const { quiz, video, demo, currentId, setCurrentId, loading, err } =
-    useStepController();
+  const { quiz, video, demo,explain, currentId, setCurrentId, loading, err } =
+    useStepController("/data/stepB.json");
   const { devices, selected, subscribe, disconnect, samples, hr } =
     useHeartRate("http://127.0.0.1:5000");
 
@@ -99,7 +99,7 @@ export default function SecurityQuiz() {
   }
   if (!quiz && !video && !demo && currentId == "end") {
     return (
-      <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-slate-900/70">
+      <div className="relative w-screen overflow-hidden flex items-center justify-center bg-slate-900/70">
         <ScoreSummary
           quizCorrectCount={quizCorrectCount}
           isFirstTryCorrect={!!isFirstTryCorrect}
@@ -126,6 +126,29 @@ export default function SecurityQuiz() {
             if (isCorrect) setQuizCorrectCount((prev) => prev + 1);
           }}
         />
+      )}
+       {/* ---- Explain ---- */}
+      {explain?.isShow && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#23272b] border border-gray-700/50 p-6 text-gray-100">
+            <h3 className="text-xl font-bold mb-2">解答</h3>
+            <p className="mb-4">{explain.answer}</p>
+            <h4 className="text-lg font-semibold mb-2">解説</h4>
+            <p className="whitespace-pre-wrap leading-relaxed">
+              {explain.body}
+            </p>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                className="rounded-lg px-4 py-2 bg-rose-500 hover:bg-rose-400 text-white"
+                onClick={() => setCurrentId(explain.next)}
+              >
+                次へ進む
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {/* ---- Video ---- */}
       {video?.isShow && (

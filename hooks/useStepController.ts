@@ -10,6 +10,7 @@ type RawStep =
       type: "quiz";
       question: string;
       options: RawOption[];
+      image?: string[];
       correct: string;
       nextId: string;
     }
@@ -23,13 +24,15 @@ type RawStep =
       videoCorrect: string;
       videoWrong: string;
       nextId: string;
-    };
+    }
+  | { id: string; type: "explain"; answer: string; body: string; nextId: string };
 
 export type Quiz = {
   id: string;
   isShow: boolean;
   question: string;
   options: { id: string; option: string }[];
+  image?: string[];
   correct: string;
   next: string;
 };
@@ -44,12 +47,20 @@ export type Demo = {
   videoWrong: string;
   next: string;
 };
+export type Explain = {
+  id: string;
+  isShow: boolean;
+  answer: string;
+  body: string;
+  next: string;
+};
 
-export const useStepController = () => {
+export const useStepController = (url: string) => {
   const [currentId, setCurrentId] = useState("quiz1");
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [video, setVideo] = useState<Video | null>(null);
   const [demo, setDemo] = useState<Demo | null>(null);
+  const [explain, setExplain] = useState<Explain | null>(null);
   const [stepData, setStepData] = useState<RawStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -58,7 +69,7 @@ export const useStepController = () => {
     let mounted = true;
     (async () => {
       try {
-        const data = await fetchStepData();
+        const data = await fetchStepData(url);
         if (!Array.isArray(data)) throw new Error("stepData is not an array");
         if (mounted) setStepData(data);
       } catch (e: any) {
@@ -81,6 +92,7 @@ export const useStepController = () => {
       setQuiz(null);
       setVideo(null);
       setDemo(null);
+      setExplain(null);
       return;
     }
 
@@ -88,6 +100,7 @@ export const useStepController = () => {
     setQuiz(null);
     setVideo(null);
     setDemo(null);
+    setExplain(null);
 
     if (s.type === "quiz") {
       setQuiz({
@@ -97,6 +110,7 @@ export const useStepController = () => {
         options: s.options
           .map((o) => ({ id: o.id, option: o.option ?? o.e ?? "" }))
           .filter((o) => o.option),
+        image: s.image,
         correct: s.correct,
         next: s.nextId,
       });
@@ -121,6 +135,18 @@ export const useStepController = () => {
       });
       return;
     }
+
+    if (s.type === "explain") {
+      setExplain({
+        id: s.id,
+        isShow: true,
+        answer: s.answer,
+        body: s.body,
+        next: s.nextId,
+      });
+      console.log(explain);
+      return;
+    }
   }, [currentId, stepData, loading, err]);
 
   // デバッグ
@@ -136,5 +162,5 @@ export const useStepController = () => {
     });
   }, [loading, err, currentId, stepData, quiz, video, demo]);
 
-  return { quiz, video, demo, currentId, setCurrentId, loading, err };
+  return { quiz, video, demo, explain, currentId, setCurrentId, loading, err };
 };

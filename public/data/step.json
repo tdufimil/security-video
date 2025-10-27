@@ -1,46 +1,123 @@
 [
   {
+    "type": "video",
+    "id": "start",
+    "src": "/video/correct1.mp4",
+    "next": "quiz1"
+  },
+  {
     "type": "quiz",
     "id": "quiz1",
-    "question": "この画面の詐欺はどんな詐欺？",
+    "question": "下のAとBは、どちらかが本物のサイトを真似た「フィッシング詐欺サイト」です。偽物（フィッシングサイト）はどちらでしょう？",
+    "image": ["images/quiz11.png", "images/quiz12.png"],
     "options": [
-      { "id": "1", "option": "images/scam_top_image.png" },
-      { "id": "2", "option": "images/scam_top_image.png" }
+      { "id": "1", "option": "Aが偽物" },
+      { "id": "2", "option": "Bが偽物" },
+      { "id": "3", "option": "どちらも本物" },
+      { "id": "4", "option": "どちらも偽物" }
     ],
-    "correct": "1",
+    "correct": "2",
+    "nextId": "explain_quiz1"
+  },
+  {
+    "type": "explain",
+    "id": "explain_quiz1",
+    "answer": "2. Bが偽物",
+    "body": "（ここに quiz1 の解説を入れる）本物サイトに似せたURLや微妙なUIの違い、証明書情報の確認ポイントなどを説明。",
     "nextId": "quiz2"
   },
   {
     "type": "quiz",
     "id": "quiz2",
-    "question": "この画面の詐欺はどんな詐欺？",
+    "question": "PCでインターネットを見ている最中、突然「ピー！」という警告音と共に「ウイルスに感染しました！今すぐお電話ください！ 010-XXXX-XXXX」という画面が表示されました。このとき、最初にとるべき正しい行動はどれでしょう？",
+    "image": ["images/quiz2.png"],
     "options": [
-      { "id": "1", "option": "images/scam_top_image.png" },
-      { "id": "2", "option": "images/scam_top_image.png" }
+      {
+        "id": "1",
+        "option": "画面に表示された電話番号に電話し、サポート担当者の指示に従う。"
+      },
+      {
+        "id": "2",
+        "option": "ウイルスを駆除するため、画面に表示されている「OK」や「スキャン開始」ボタンを押す。"
+      },
+      { "id": "3", "option": "ブラウザ（インターネットの画面）を閉じる。" },
+      {
+        "id": "4",
+        "option": "本当に感染したか確かめるため、PCで自分のメールやSNSを開いてみる。"
+      }
     ],
-    "correct": "1",
+    "correct": "3",
+    "nextId": "explain_quiz2"
+  },
+  {
+    "type": "explain",
+    "id": "explain_quiz2",
+    "answer": "3. ブラウザ（インターネットの画面）を閉じる。",
+    "body": "これは、あなたを騙そうとする「サポート詐欺」の手口です。警告音や警告画面は、あなたを焦らせて電話をかけさせ、お金をだまし取るためのウソです。詐欺画面が出てきたら、まずは Esc キーを押す。それでも無理そうなら電源を切るか再起動をしましょう。",
     "nextId": "quiz3"
   },
   {
     "type": "quiz",
     "id": "quiz3",
-    "question": "この画面の詐欺はどんな詐欺？",
+    "question": "あなたが使っているスマホ決済,QRコード決済（〇〇ペイなど）のアカウントが乗っ取られ、不正利用される危険性が最も高い行動はどれでしょう？",
     "options": [
-      { "id": "1", "option": "images/scam_top_image.png" },
-      { "id": "2", "option": "images/scam_top_image.png" }
+      {
+        "id": "1",
+        "option": "スマホ本体に、指紋認証や顔認証のロックをかけている。"
+      },
+      {
+        "id": "2",
+        "option": "ログインパスワードを、SNSやゲームと同じものに設定している。"
+      },
+      {
+        "id": "3",
+        "option": "お店で支払うときだけアプリを起動し、普段は閉じている。"
+      },
+      {
+        "id": "4",
+        "option": "万が一に備えて、チャージする金額は3,000円までと決めている。"
+      }
     ],
-    "correct": "1",
+    "correct": "2",
+    "nextId": "explain_quiz3"
+  },
+  {
+    "type": "explain",
+    "id": "explain_quiz3",
+    "answer": "2. ...",
+    "body": "（解説）",
     "nextId": "quiz4"
   },
   {
     "type": "quiz",
     "id": "quiz4",
-    "question": "この画面の詐欺はどんな詐欺？",
+    "question": "SNS（XやInstagram、TikTokなど）を利用する上で、不適切な行動はどれでしょう？",
     "options": [
-      { "id": "1", "option": "images/scam_top_image.png" },
-      { "id": "2", "option": "images/scam_top_image.png" }
+      {
+        "id": "1",
+        "option": "友達のパスワードを知ってしまったが、本人以外には言わずに、自分もログインしなかった。"
+      },
+      {
+        "id": "2",
+        "option": "「AさんがBさんの悪口を言っていた」という噂を又聞きしたが、本当かわからないので自分は誰にも言わなかった。"
+      },
+      {
+        "id": "3",
+        "option": "面白いデマ情報が流れてきたので、友達にウケると思って「これ本当？」とコメントを付けてリポストした。"
+      },
+      {
+        "id": "4",
+        "option": "自分のアカウントで、友達の顔が写った写真を投稿する前に、本人に許可をもらった。"
+      }
     ],
-    "correct": "1",
+    "correct": "3",
+    "nextId": "explain_quiz4"
+  },
+  {
+    "type": "explain",
+    "id": "explain_quiz4",
+    "answer": "3. ...",
+    "body": "（解説）",
     "nextId": "demo"
   },
   {
@@ -53,7 +130,7 @@
     "videoCorrect": "correct1",
     "videoWrong": "wrong1",
     "retryOnFail": true,
-    "nexId": "end"
+    "nextId": "end"
   },
   {
     "type": "video",
@@ -67,8 +144,5 @@
     "src": "/video/wrong1.mp4",
     "next": "demo"
   },
-  {
-    "type": "end",
-    "id": "end"
-  }
+  { "type": "end", "id": "end" }
 ]

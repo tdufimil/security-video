@@ -12,7 +12,8 @@ export default function QuizModal({
 }: {
   isOpen: boolean;
   question: string;
-  image?: string;
+  // `image` can be a single image path or an array of two image paths
+  image?: string | string[];
   choices: string[];
   correctAnswers: string[];
   onAnswer: (selected: string) => void;
@@ -34,10 +35,18 @@ export default function QuizModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-      <div className="bg-white rounded-xl shadow-xl p-7 w-220 h-auto text-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-sm py-8 overflow-auto">
+      <div className="bg-white rounded-xl shadow-xl p-7 w-full max-w-4xl mx-4 max-h-[90vh] overflow-auto text-center">
         <h2 className="text-5xl font-bold mb-4">{question}</h2>
-        {image && <img src={image} alt="quiz" className="mx-auto mb-4 max-h-96" />}
+        {/* If image is an array of two images, display them side-by-side. If it's a single image, center it. */}
+        {Array.isArray(image) && image.length === 2 ? (
+          <div className="mb-4 flex flex-col md:flex-row items-center justify-center gap-4">
+            <img src={image[0]} alt="left" className="max-h-72 w-full md:w-1/2 object-contain rounded" />
+            <img src={image[1]} alt="right" className="max-h-72 w-full md:w-1/2 object-contain rounded" />
+          </div>
+        ) : (
+          image && <img src={String(image)} alt="quiz" className="mx-auto mb-4 max-h-96 w-full object-contain" />
+        )}
         <div className="space-y-2">
           {choices.map((choice) => (
             <button

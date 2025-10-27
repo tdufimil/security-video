@@ -18,10 +18,11 @@ import {
   calcSpeedScore,
   calcStabilityScore,
 } from "../lib/scoreCalculator";
+import ExplainSection from "../components/ExplainScreen";
 
 export default function SecurityQuiz() {
-  const { quiz, video, demo, currentId, setCurrentId, loading, err } =
-    useStepController();
+  const { quiz, video, demo, explain, currentId, setCurrentId, loading, err } =
+    useStepController("/data/step.json");
   const { devices, selected, subscribe, disconnect, samples, hr } =
     useHeartRate("http://127.0.0.1:5000");
 
@@ -111,9 +112,9 @@ export default function SecurityQuiz() {
       </div>
     );
   }
-  
+
   return (
-    <div className="relative w-screen h-screen overflow-hidden">
+    <div className="relative w-screen min-h-screen overflow-hidden">
       <div className="absolute top-3 right-3 z-50 rounded bg-black/50 text-white px-3 py-2 text-sm space-y-1">
         <div>HR: {hr ?? "-"} bpm</div>
       </div>
@@ -125,6 +126,14 @@ export default function SecurityQuiz() {
           onAnswered={(isCorrect) => {
             if (isCorrect) setQuizCorrectCount((prev) => prev + 1);
           }}
+        />
+      )}
+      {/* ---- Explain ---- */}
+      {explain?.isShow && (
+        <ExplainSection
+          answer={explain.answer}
+          body={explain.body}
+          onNext={() => setCurrentId(explain.next)}
         />
       )}
       {/* ---- Video ---- */}

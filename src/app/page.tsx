@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 export default function TopPage() {
   const router = useRouter();
 
-  const handleStart = () => {
-    router.push("/securityvideo");
+  const handleStart = (url:string) => {
+    router.push(url);
   };
 
   return (
@@ -19,12 +19,18 @@ export default function TopPage() {
       />
 
       {/* 中央のボタン */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
+      <div className="absolute inset-0 flex items-center justify-center z-10 gap-30">
         <button
-          onClick={handleStart}
+          onClick={()=>handleStart("/a")}
           className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
         >
-          動画を再生する
+          パターンA
+        </button>
+        <button
+          onClick={()=>handleStart("/b")}
+          className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
+        >
+          パターンB
         </button>
       </div>
     </div>

@@ -24,15 +24,19 @@ const ShieldIcon = ({ className = "w-10 h-10" }: { className?: string }) => (
   </svg>
 );
 
-const QuizScreen = ({ quizData, setCurrentId, onAnswered }: QuizScreenProps) => {
-  const handleAnswer = (opt: any) => {
-    const isCorrect = opt.id === quizData.correct;
-    if (onAnswered) onAnswered(isCorrect);
+const QuizScreen = ({
+  quizData,
+  setCurrentId,
+  onAnswered,
+}: QuizScreenProps) => {
+  const handleAnswer = (selectedId: string) => {
+    const isCorrect = selectedId === quizData.correct;
+    onAnswered?.(isCorrect);
     setCurrentId(quizData.next);
   };
+
   return (
     <div className="relative min-h-screen w-full bg-[#1b1e22] text-gray-100">
-      {/* 背景：柔らかいグリッド＋薄い赤青グラデ */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.08]"
@@ -52,20 +56,17 @@ const QuizScreen = ({ quizData, setCurrentId, onAnswered }: QuizScreenProps) => 
 
       {/* ヘッダー */}
       <header className="sticky top-0 z-10 border-b border-gray-700/40 bg-[#1c1f23]/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-4">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-4">
           <div className="flex items-center gap-3 text-rose-400">
             <ShieldIcon className="w-8 h-8 md:w-10 md:h-10" />
             <span className="text-lg md:text-xl font-semibold tracking-widest">
-              SECURITY CHECKPOINT
+              SECURITY診断テスト
             </span>
           </div>
-          <span className="ml-auto rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-sm font-mono text-amber-300">
-            ALERT: VERIFY THREAT TYPE
-          </span>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-10 md:py-14">
+      <main className="mx-auto w-full max-w-7xl px-4 md:px-6 py-10 md:py-14">
         {/* 問題カード */}
         <section className="relative mb-10 overflow-hidden rounded-2xl border border-gray-700/50 bg-[#23272b]/70 shadow-[0_0_0_1px_rgba(148,163,184,0.08)_inset]">
           <div className="flex items-start gap-5 p-8 md:p-10">
@@ -80,41 +81,56 @@ const QuizScreen = ({ quizData, setCurrentId, onAnswered }: QuizScreenProps) => 
           </div>
         </section>
 
-        {/* 画像オプション */}
-        <section className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {quizData.options.map((opt) => (
-            <button
-              key={opt.id}
-              type="button"
-              onClick={() => handleAnswer(opt)}
-              className="group relative overflow-hidden rounded-2xl border border-gray-700/50 bg-[#24282d]/80 text-left shadow-md transition hover:shadow-[0_0_12px_rgba(248,113,113,0.2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/70"
-              aria-label={`選択肢 ${opt.id}`}
-            >
-              <div className="relative w-full bg-gray-800">
-                <div className="aspect-video">
+        {/* 画像*/}
+        {Array.isArray(quizData.image) && quizData.image.length > 0 && (
+          <section className="flex flex-col gap-10 mb-10">
+            {quizData.image.map((src, idx) => (
+              <div
+                key={src + idx}
+                className="relative w-full overflow-hidden rounded-2xl border border-gray-700/60 bg-[#202428] p-4"
+              >
+                {/* ラベル（A/B） */}
+                <div className="absolute left-5 top-5 z-10 rounded-full bg-black/60 px-4 py-1 text-sm font-semibold text-white">
+                  {idx === 0 ? "A" : idx === 1 ? "B" : `#${idx + 1}`}
+                </div>
+
+                {/* 画像（全体表示・比率維持） */}
+                <div className="w-full flex justify-center">
                   <img
-                    src={opt.option}
-                    alt={`選択肢 ${opt.id}`}
-                    className="h-full w-full object-cover"
+                    src={src}
+                    alt={`選択画像 ${idx + 1}`}
+                    className="max-h-[80vh] w-auto object-contain"
                     loading="lazy"
                   />
                 </div>
-                {/* 柔らかいホバーオーバーレイ */}
-                <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-300 bg-gradient-to-t from-rose-400/10 to-transparent" />
               </div>
+            ))}
+          </section>
+        )}
 
-              {/* 下部テキスト */}
-              <div className="flex items-center justify-between px-5 py-4">
-                <span className="rounded border border-gray-600/60 bg-gray-700/30 px-3 py-1 font-mono text-base text-gray-200">
-                  OPTION #{opt.id}
-                </span>
-                <span className="text-base text-rose-300/80 group-hover:text-rose-300 transition">
-                  Click to Evaluate →
-                </span>
-              </div>
-            </button>
-          ))}
-        </section>
+        {/* テキスト選択肢（画像の下に表示） */}
+        {Array.isArray(quizData.options) && quizData.options.length > 0 && (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {quizData.options.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => handleAnswer(opt.id)}
+                className="group w-full rounded-xl border border-gray-700/60 bg-[#23272b] p-4 text-left transition
+                 hover:border-rose-400/60 hover:bg-[#262b30] focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gray-800 text-gray-200 group-hover:bg-rose-500 group-hover:text-white">
+                    {opt.id}
+                  </div>
+                  <span className="text-base md:text-lg text-gray-100">
+                    {opt.option}
+                  </span>
+                </div>
+              </button>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );
