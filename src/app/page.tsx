@@ -24,13 +24,13 @@ export default function TopPage() {
           onClick={()=>handleStart("/a")}
           className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
         >
-          パターンA
+          パターンA(事前予告あり)
         </button>
         <button
           onClick={()=>handleStart("/b")}
           className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
         >
-          パターンB
+          パターンB(事前予告なし)
         </button>
       </div>
     </div>

@@ -11,13 +11,6 @@ import FakeSupportScamScreen from "../components/FakeSupportScamScreen";
 import NotifyPopup from "../components/NotifyPopup";
 import ScoreSummary from "../components/ScoreSummary";
 import { computeHeartRateScore } from "../lib/heartRateScore";
-import {
-  calcCalmnessScore,
-  calcJudgementScore,
-  calcKnowledgeScore,
-  calcSpeedScore,
-  calcStabilityScore,
-} from "../lib/scoreCalculator";
 import ExplainSection from "../components/ExplainScreen";
 
 export default function SecurityQuiz() {
@@ -35,8 +28,8 @@ export default function SecurityQuiz() {
   const [quizCorrectCount, setQuizCorrectCount] = useState(0);
   // 行動速度・判断力管理
   const [actionSeconds, setActionSeconds] = useState<number | null>(null);
-  const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<boolean | null>(
-    null
+  const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<number>(
+    100
   );
 
   // === quiz1 で心拍取得を開始 ===
@@ -59,17 +52,9 @@ export default function SecurityQuiz() {
   const scoreDetail = useMemo(() => computeHeartRateScore(samples), [samples]);
 
   // 仮データ（本番はpropsやcontextから取得）
-  // const quizCorrectCount = quiz?.correctCount ?? 3; // ← 削除
   const baseHR = 70; // 例: 平常時心拍
   const peakHR = hr ?? 90; // 例: 体験時心拍
   const hrStddev = scoreDetail.std ?? 8; // 例: 心拍標準偏差
-
-  // 各スコア算出
-  const knowledgeScore = calcKnowledgeScore(quizCorrectCount);
-  const judgementScore = calcJudgementScore(!!isFirstTryCorrect);
-  const calmnessScore = calcCalmnessScore(baseHR, peakHR);
-  const speedScore = calcSpeedScore(actionSeconds ?? 0);
-  const stabilityScore = calcStabilityScore(hrStddev);
 
   // FakeSupportScamScreen から「正解」通知（ESC長押し）を受けたら
   const handleQuiz2Result = (
@@ -78,7 +63,6 @@ export default function SecurityQuiz() {
     isFirstTry: boolean
   ) => {
     setActionSeconds(sec);
-    setIsFirstTryCorrect(isFirstTry);
     if (!demo) return;
     if (correct) {
       setCurrentId("correct1");
@@ -103,7 +87,7 @@ export default function SecurityQuiz() {
       <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-slate-900/70">
         <ScoreSummary
           quizCorrectCount={quizCorrectCount}
-          isFirstTryCorrect={!!isFirstTryCorrect}
+          isFirstTryCorrect={isFirstTryCorrect}
           baseHR={baseHR}
           peakHR={peakHR}
           actionSeconds={actionSeconds ?? 0}
@@ -157,6 +141,8 @@ export default function SecurityQuiz() {
             setRetryAfterWrongQuiz2={setRetryAfterWrongQuiz2}
             wrongCount={quiz2WrongCount}
             setWrongCount={setQuiz2WrongCount}
+            isFirstTryCorrect={isFirstTryCorrect}
+            setFirstTryCorrect={setIsFirstTryCorrect}
           />
           <FakeScanProgress onComplete={() => {}} />
           <NotifyPopup />

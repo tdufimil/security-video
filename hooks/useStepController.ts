@@ -56,7 +56,7 @@ export type Explain = {
 };
 
 export const useStepController = (url: string) => {
-  const [currentId, setCurrentId] = useState("quiz1");
+  const [currentId, setCurrentId] = useState("start");
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [video, setVideo] = useState<Video | null>(null);
   const [demo, setDemo] = useState<Demo | null>(null);

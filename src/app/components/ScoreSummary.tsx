@@ -21,7 +21,7 @@ import {
 
 type Props = {
   quizCorrectCount: number;
-  isFirstTryCorrect: boolean;
+  isFirstTryCorrect: number;
   baseHR: number;
   peakHR: number;
   actionSeconds: number;

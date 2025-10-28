@@ -3,12 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  onResult: (correct: boolean, actionSeconds: number, isFirstTry: boolean) => void;
+  onResult: (
+    correct: boolean,
+    actionSeconds: number,
+    isFirstTry: boolean
+  ) => void;
   setShowQuiz: (show: boolean) => void;
   setCurrentId: (id: string) => void;
   setRetryAfterWrongQuiz2: (val: boolean) => void;
   wrongCount: number;
   setWrongCount: (count: number) => void;
+  isFirstTryCorrect: number;
+  setFirstTryCorrect: (val: number) => void;
 };
 
 export default function FakeSupportScamScreen({
@@ -18,15 +24,20 @@ export default function FakeSupportScamScreen({
   setRetryAfterWrongQuiz2,
   wrongCount,
   setWrongCount,
+  isFirstTryCorrect,
+  setFirstTryCorrect,
 }: Props) {
   // ==== 設定値 ====
-  const LONG_PRESS_MS = 1000;     // ← ESC 長押し 1秒で正解
-  const FAIL_AFTER_MS = 30000;    // ← 30秒以内に長押しできなければ不正解
-  const WARN_REMAIN_MS = 11000;   // ← 残り約11秒でカウントダウン表示
+  const LONG_PRESS_MS = 1000; // ESC 長押し 1秒で正解
+  const FAIL_AFTER_MS = 30000; // 30秒以内に長押しできなければ不正解
+  const WARN_REMAIN_MS = 11000; // 残り約11秒でカウントダウン表示
 
   // ==== 状態 ====
-  const [mainWindows, setMainWindows] = useState([{ id: 1, top: 120, left: 240 }]);
+  const [mainWindows, setMainWindows] = useState([
+    { id: 1, top: 120, left: 240 },
+  ]);
   const [remainingMs, setRemainingMs] = useState(FAIL_AFTER_MS);
+  const [showStartMenu, setShowStartMenu] = useState(false); // ← 追加: スタートメニュー表示
 
   // ==== ref ====
   const startAtRef = useRef<number>(Date.now());
@@ -38,7 +49,9 @@ export default function FakeSupportScamScreen({
   const sound1Ref = useRef<HTMLAudioElement | null>(null);
   const sound2Ref = useRef<HTMLAudioElement | null>(null);
   const onResultRef = useRef(onResult);
-  useEffect(() => { onResultRef.current = onResult; }, [onResult]);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
 
   // ==== フルスクリーン ====
   const enterFullscreen = () => {
@@ -52,6 +65,19 @@ export default function FakeSupportScamScreen({
     return Promise.resolve();
   };
 
+  // ==== 正解処理（共通） ====
+  const finishAsCorrect = async () => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    const actionSeconds = (Date.now() - startAtRef.current) / 1000;
+    try {
+      if (document.fullscreenElement) await exitFullscreen();
+    } finally {
+      setShowQuiz(false);
+      onResultRef.current(true, actionSeconds, firstTryRef.current);
+    }
+  };
+
   // ==== 不正解処理（共通） ====
   const failAndFinish = async () => {
     if (finishedRef.current) return;
@@ -61,8 +87,15 @@ export default function FakeSupportScamScreen({
       if (document.fullscreenElement) await exitFullscreen();
     } finally {
       setShowQuiz(false);
+      setFirstTryCorrect(25);
       onResultRef.current(false, actionSeconds, firstTryRef.current);
     }
+  };
+
+  // モーダルウィンドウのボタンクリック時の処理（正解率ペナルティ？のまま残す）
+  const handleButtonClick = () => {
+    if (isFirstTryCorrect <= 25) return 25;
+    setFirstTryCorrect(isFirstTryCorrect - 15);
   };
 
   // ==== マウント時のセットアップ ====
@@ -98,24 +131,16 @@ export default function FakeSupportScamScreen({
     return () => clearInterval(id);
   }, []);
 
-  // ==== ESC 長押し検出（keydown/keyup 一度登録、refで安定化） ====
+  // ==== ESC 長押し検出 ====
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (finishedRef.current) return;
       if (e.key !== "Escape") return;
       if (holdingRef.current) return; // リピート防止
       holdingRef.current = true;
-      holdTimerRef.current = window.setTimeout(async () => {
+      holdTimerRef.current = window.setTimeout(() => {
         // 長押し成立 → 正解
-        if (finishedRef.current) return;
-        finishedRef.current = true;
-        const actionSeconds = (Date.now() - startAtRef.current) / 1000;
-        try {
-          if (document.fullscreenElement) await exitFullscreen();
-        } finally {
-          setShowQuiz(false);
-          onResultRef.current(true, actionSeconds, firstTryRef.current);
-        }
+        finishAsCorrect();
       }, LONG_PRESS_MS);
     };
 
@@ -141,13 +166,13 @@ export default function FakeSupportScamScreen({
   useEffect(() => {
     const interval = setInterval(() => {
       setMainWindows((prev) =>
-        prev.length < 3
+        prev.length < 4
           ? [
               ...prev,
               {
                 id: Date.now(),
-                top: Math.random() * 350 + 50,
-                left: Math.random() * 400 + 50,
+                top: Math.random() * 650 + 50,
+                left: Math.random() * 700 + 50,
               },
             ]
           : prev
@@ -166,9 +191,13 @@ export default function FakeSupportScamScreen({
     const interval = setInterval(() => {
       const audio = sound1Ref.current;
       if (!audio) return;
-      if (audio.volume < maxVolume) audio.volume = Math.min(maxVolume, audio.volume + volumeStep);
-      if (audio.playbackRate < maxPlaybackRate) audio.playbackRate = Math.min(maxPlaybackRate, audio.playbackRate + playbackRateStep);
-      // console.log(`[sound1] volume=${audio.volume}, rate=${audio.playbackRate}`);
+      if (audio.volume < maxVolume)
+        audio.volume = Math.min(maxVolume, audio.volume + volumeStep);
+      if (audio.playbackRate < maxPlaybackRate)
+        audio.playbackRate = Math.min(
+          maxPlaybackRate,
+          audio.playbackRate + playbackRateStep
+        );
     }, 10000);
 
     return () => clearInterval(interval);
@@ -176,6 +205,11 @@ export default function FakeSupportScamScreen({
 
   const remainSec = Math.ceil(remainingMs / 1000);
   const showCountdown = remainingMs <= WARN_REMAIN_MS;
+
+  // ==== タスクバーの再起動（正解）ハンドラ ====
+  const handleRestartClick = async () => {
+    await finishAsCorrect();
+  };
 
   return (
     <div className="fixed inset-0 z-50 container">
@@ -187,7 +221,7 @@ export default function FakeSupportScamScreen({
         {mainWindows.map((w, idx) => (
           <div
             key={w.id}
-            className="absolute min-w-[410px] max-w-[90vw] shadow-2xl rounded border border-gray-400 pointer-events-auto"
+            className="absolute min-w-[550px] h-[380px] max-w-[95vw] shadow-2xl rounded border border-gray-400 pointer-events-auto"
             style={{
               zIndex: 1000 + idx,
               top: w.top,
@@ -200,7 +234,10 @@ export default function FakeSupportScamScreen({
               <div className="text-white text-xs font-bold tracking-widest">
                 Windows セキュリティの警告
               </div>
-              <button className="text-white w-6 h-6 flex items-center justify-center hover:bg-blue-800 rounded font-bold">
+              <button
+                className="text-white w-6 h-6 flex items-center justify-center hover:bg-blue-800 rounded font-bold"
+                onClick={handleButtonClick}
+              >
                 ×
               </button>
             </div>
@@ -215,7 +252,7 @@ export default function FakeSupportScamScreen({
                   (エラーコード: 2V7HGTVB)
                 </span>
               </div>
-              <div className="mb-1">
+              <div className="mb-15">
                 このPCへのアクセスはセキュリティ上の理由からブロックされています。
                 <br />
                 <a
@@ -229,34 +266,47 @@ export default function FakeSupportScamScreen({
                   Windows サポートに電話してください : (0101)
                 </a>
               </div>
-              <img src="/images/re.gif" alt="再起動中" className="mt-2 w-[300px]" />
+
+              {/* 中央寄せ */}
+              <img
+                src="/images/re.gif"
+                alt="再起動中"
+                className="mt-4 w-[300px] mx-auto"
+              />
             </div>
 
-            <div className="flex justify-end gap-2 px-6 pb-3">
-              <button className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-gray-100 shadow text-base font-semibold hover:bg-gray-200">
+            {/* ボタンの位置を少し下に */}
+            <div className="flex justify-end gap-2 px-6 pb-8">
+              <button
+                className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-gray-100 shadow text-base font-semibold hover:bg-gray-200"
+                onClick={handleButtonClick}
+              >
                 キャンセル
               </button>
-              <button className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-blue-500 text-white shadow font-semibold hover:bg-blue-600">
+              <button
+                className="min-w-[90px] px-4 py-1 rounded border border-gray-400 bg-blue-500 text-white shadow font-semibold hover:bg-blue-600"
+                onClick={handleButtonClick}
+              >
                 OK
               </button>
             </div>
           </div>
         ))}
 
-        {/* 電話誘導バナー（クリックで不正解） */}
+        {/* 電話誘導バナー（クリックで不正解） - タスクバーと重ならないよう bottom-12 */}
         <div
-          className="fixed left-0 bottom-0 w-full h-12 bg-blue-900 text-white flex items-center px-8 text-sm z-[2100]"
+          className="fixed left-0 bottom-12 w-full h-12 bg-blue-900 text-white flex items-center px-8 text-sm z-[2100]"
           onClick={failAndFinish}
         >
           Windows のセキュリティ　Windows サポートに電話する: (0101)
         </div>
 
         {/* ESC ヒント */}
-        <div className="fixed bottom-10 left-10 text-xl text-white bg-black/70 px-5 py-2 rounded-lg pointer-events-none">
+        <div className="fixed bottom-24 left-10 text-xl text-white bg-black/70 px-5 py-2 rounded-lg pointer-events-none">
           ESCキーを1秒以上長押しでウィンドウを閉じる
         </div>
 
-        {/* 🔴 残り時間のカウントダウン） */}
+        {/* 🔴 残り時間のカウントダウン */}
         {showCountdown && !finishedRef.current && (
           <div className="fixed top-6 right-6 z-[2200]">
             <div className="rounded-xl bg-black/70 px-4 py-2 border border-red-500/60 shadow-lg">
@@ -266,6 +316,127 @@ export default function FakeSupportScamScreen({
             </div>
           </div>
         )}
+
+        {/* ======== ここから Windows 11 風タスクバー ======== */}
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-2  w-full h-14 rounded-2xl bg-[#e8f2fb]/80 border border-white/60 shadow-lg shadow-black/10 backdrop-blur-md z-[2205]">
+          {/* バー内 */}
+          <div className="h-full px-3 flex items-center gap-3">
+            {/* スタート（四分割のWindowsロゴ） */}
+            <button
+              onClick={() => setShowStartMenu((v) => !v)}
+              aria-label="Start"
+              className="relative grid grid-cols-2 grid-rows-2 gap-[2px] w-10 h-10 rounded-lg bg-[#e8f2fb]/0 hover:bg-white/40 active:scale-[0.98] transition ml-75"
+            >
+              <span className="bg-[#1296ff] rounded-sm" />
+              <span className="bg-[#1296ff] rounded-sm" />
+              <span className="bg-[#1296ff] rounded-sm" />
+              <span className="bg-[#1296ff] rounded-sm" />
+            </button>
+
+            {/* 検索ピル */}
+            <button className="flex items-center gap-2 h-10 px-4 rounded-2xl bg-white/70 border border-white/70 shadow-inner min-w-[220px] hover:bg-white/90 text-gray-600 ml-6">
+              {/* ルーペ */}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                className="opacity-80"
+              >
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="16.65"
+                  y1="16.65"
+                  x2="21"
+                  y2="21"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="text-[15px]">検索</span>
+            </button>
+
+            {/* 中央寄せアイコン列（画像の雰囲気に寄せた角丸アイコン） */}
+            <div className="flex items-center gap-3 mx-auto">
+              {/* バッジ付きアイコン例（OneDrive風） */}
+              <div className="relative w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="relative w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95">
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[11px] leading-[18px] text-center px-[5px]">
+                  4
+                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+              <div className="w-10 h-10 rounded-xl bg-white/80 border border-white/70 shadow-inner hover:brightness-95" />
+            </div>
+
+            {/* 右側：トレイ＆時刻 */}
+            <div className="flex items-center gap-3 ml-auto">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-white/70 border border-white/70 shadow-inner" />
+                <div className="w-8 h-8 rounded-lg bg-white/70 border border-white/70 shadow-inner" />
+                <div className="w-8 h-8 rounded-lg bg-white/70 border border-white/70 shadow-inner" />
+                <div className="w-8 h-8 rounded-lg bg-white/70 border border-white/70 shadow-inner" />
+              </div>
+              <div className="text-right leading-tight select-none pr-1">
+                <div className="text-[13px] tabular-nums">
+                  {new Date().toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+                <div className="text-[11px] text-gray-600">
+                  {new Date().toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* スタートメニュー（電源→再起動で正解） */}
+          {showStartMenu && (
+            <div
+              className="absolute bottom-16 left-3 w-80 bg-white/95 text-gray-900 rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
+              style={{ backdropFilter: "blur(10px)" }}
+            >
+              <div className="p-3 border-b border-gray-200">
+                <div className="text-lg font-semibold">メニュー</div>
+                <div className="text-sm text-gray-500">
+                  アプリや設定にアクセスします
+                </div>
+              </div>
+              <div className="p-3 space-y-2">
+                <div className="text-xs uppercase tracking-wider text-gray-500">
+                  電源
+                </div>
+                <button
+                  onClick={handleRestartClick}
+                  className="w-full text-left px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
+                >
+                  再起動
+                </button>
+              </div>
+              <div className="p-2 border-t border-gray-200 flex justify-end">
+                <button
+                  onClick={() => setShowStartMenu(false)}
+                  className="px-3 py-1 text-sm rounded-lg hover:bg-gray-100"
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export default function NotifyPopup() {
       <img
         src="/images/winsecuritynotify.png"
         alt="警告通知"
-        className="w-[370px] h-auto shadow-xl rounded-lg"
+        className="w-[470px] h-auto shadow-xl rounded-lg"
       />
     </div>
   );

@@ -21,9 +21,13 @@ export function calcKnowledgeScore(correctCount: number): number {
   }
 }
 
-export function calcJudgementScore(isFirstTryCorrect: boolean): number {
+export function calcJudgementScore(isFirstTryCorrect: number): number {
   // null/undefined対策：!!でboolean化
-  return !!isFirstTryCorrect ? 100 : 50;
+ if (isFirstTryCorrect<=25) {
+    return 25;
+  } else {
+    return isFirstTryCorrect;
+  }
 }
 
 export function calcCalmnessScore(baseHR: number, peakHR: number): number {
