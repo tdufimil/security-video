@@ -25,7 +25,8 @@ type RawStep =
       videoWrong: string;
       nextId: string;
     }
-  | { id: string; type: "explain"; answer: string; body: string; nextId: string };
+  | { id: string; type: "explain"; answer: string; body: string; nextId: string }
+  | { id: string; type: "end" };
 
 export type Quiz = {
   id: string;
@@ -64,6 +65,7 @@ export const useStepController = (url: string) => {
   const [stepData, setStepData] = useState<RawStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<boolean | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -162,5 +164,5 @@ export const useStepController = (url: string) => {
     });
   }, [loading, err, currentId, stepData, quiz, video, demo]);
 
-  return { quiz, video, demo, explain, currentId, setCurrentId, loading, err };
+  return { quiz, video, demo, explain, currentId, setCurrentId, loading, err,lastResult, setLastResult,};
 };

@@ -7,6 +7,7 @@ type QuizScreenProps = {
   quizData: Quiz;
   setCurrentId: Dispatch<SetStateAction<string>>;
   onAnswered?: (isCorrect: boolean) => void;
+  setLastResult: (v: boolean) => void;
 };
 
 const ShieldIcon = ({ className = "w-10 h-10" }: { className?: string }) => (
@@ -28,10 +29,12 @@ const QuizScreen = ({
   quizData,
   setCurrentId,
   onAnswered,
+  setLastResult,
 }: QuizScreenProps) => {
   const handleAnswer = (selectedId: string) => {
     const isCorrect = selectedId === quizData.correct;
     onAnswered?.(isCorrect);
+    setLastResult(isCorrect);
     setCurrentId(quizData.next);
   };
 

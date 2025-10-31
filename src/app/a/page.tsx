@@ -14,8 +14,18 @@ import { computeHeartRateScore } from "../lib/heartRateScore";
 import ExplainSection from "../components/ExplainScreen";
 
 export default function SecurityQuiz() {
-  const { quiz, video, demo, explain, currentId, setCurrentId, loading, err } =
-    useStepController("/data/step.json");
+  const {
+    quiz,
+    video,
+    demo,
+    explain,
+    currentId,
+    setCurrentId,
+    loading,
+    err,
+    lastResult,
+    setLastResult,
+  } = useStepController("/data/step.json");
   const { devices, selected, subscribe, disconnect, samples, hr } =
     useHeartRate("http://127.0.0.1:5000");
 
@@ -28,9 +38,7 @@ export default function SecurityQuiz() {
   const [quizCorrectCount, setQuizCorrectCount] = useState(0);
   // 行動速度・判断力管理
   const [actionSeconds, setActionSeconds] = useState<number | null>(null);
-  const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<number>(
-    100
-  );
+  const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<number>(100);
 
   // === quiz1 で心拍取得を開始 ===
   useEffect(() => {
@@ -110,6 +118,7 @@ export default function SecurityQuiz() {
           onAnswered={(isCorrect) => {
             if (isCorrect) setQuizCorrectCount((prev) => prev + 1);
           }}
+          setLastResult={setLastResult}
         />
       )}
       {/* ---- Explain ---- */}
@@ -117,6 +126,7 @@ export default function SecurityQuiz() {
         <ExplainSection
           answer={explain.answer}
           body={explain.body}
+          isCorrect={!!lastResult}
           onNext={() => setCurrentId(explain.next)}
         />
       )}
