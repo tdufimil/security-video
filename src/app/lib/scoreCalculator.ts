@@ -12,11 +12,11 @@ export function calcKnowledgeScore(correctCount: number): number {
   // 0〜5 以外が来ても安全に
   const n = clamp(Math.floor(num(correctCount)), 0, 5);
   switch (n) {
-    case 5: return 100;
-    case 4: return 80;
-    case 3: return 60;
-    case 2: return 40;
-    case 1: return 20;
+    case 4: return 100;
+    case 3: return 80;
+    case 2: return 60;
+    case 1: return 40;
+    case 0: return 20;
     default: return 0;
   }
 }
