@@ -130,14 +130,15 @@ export default function ScoreSummary(props: Props) {
         </div>
 
         {/* 下段：総合スコア＋原データ */}
-        <div className="px-6 pb-6 flex flex-col md:flex-row items-center md:items-end justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-2xl border border-emerald-400/40 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.25)] min-w-[400px]">
-              <div className="text-xs text-emerald-200/80">総合スコア</div>
-              <div className="text-3xl md:text-4xl font-extrabold tracking-wide text-emerald-200">
-                {overall}
-              </div>
-            </div>
+        <div className="w-full flex items-center justify-center py-3">
+          <div className="bg-emerald-500/10 border border-emerald-400/40 rounded-3xl shadow-[0_0_40px_rgba(16,185,129,0.35)] px-8 py-6 flex flex-col items-center text-center min-w-[320px] md:min-w-[420px]">
+            <span className="text-4xl text-emerald-200/80 tracking-wide mb-1">
+              総合スコア
+            </span>
+
+            <span className="text-5xl md:text-6xl font-extrabold text-emerald-200 drop-shadow-lg">
+              {overall}
+            </span>
           </div>
         </div>
       </div>
