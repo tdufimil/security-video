@@ -25,7 +25,7 @@ type RawStep =
       videoWrong: string;
       nextId: string;
     }
-  | { id: string; type: "explain"; answer: string; body: string; nextId: string }
+  | { id: string; type: "explain"; answer: string; bodyCorrect: string; bodyWrong: string; nextId: string }
   | { id: string; type: "end" };
 
 export type Quiz = {
@@ -52,7 +52,8 @@ export type Explain = {
   id: string;
   isShow: boolean;
   answer: string;
-  body: string;
+  bodyCorrect: string;
+  bodyWrong: string;
   next: string;
 };
 
@@ -143,7 +144,8 @@ export const useStepController = (url: string) => {
         id: s.id,
         isShow: true,
         answer: s.answer,
-        body: s.body,
+        bodyCorrect: s.bodyCorrect,
+        bodyWrong: s.bodyWrong,
         next: s.nextId,
       });
       console.log(explain);

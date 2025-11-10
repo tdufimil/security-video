@@ -4,7 +4,8 @@ import { useMemo } from "react";
 
 type Props = {
   answer: string;
-  body: string;
+  bodyCorrect: string;
+  bodyWrong: string;
   onNext: () => void;
   /** 直前のクイズ結果 */
   isCorrect: boolean;
@@ -20,7 +21,10 @@ const ShieldIcon = ({ className = "w-16 h-16" }: { className?: string }) => (
   </svg>
 );
 
-export default function ExplainSection({ answer, body, onNext, isCorrect }: Props) {
+export default function ExplainSection({ answer, bodyCorrect, bodyWrong, onNext, isCorrect }: Props) {
+  // 正誤に応じて使用するbodyを選択
+  const body = isCorrect ? bodyCorrect : bodyWrong;
+
   const blocks = useMemo(() => {
     const paragraphs = body.split(/\n{2,}/g).map((p) => p.trim()).filter(Boolean);
     return paragraphs.map((p) => {

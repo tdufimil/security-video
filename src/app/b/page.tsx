@@ -125,7 +125,8 @@ export default function SecurityQuiz() {
       {explain?.isShow && (
         <ExplainSection
           answer={explain.answer}
-          body={explain.body}
+          bodyCorrect={explain.bodyCorrect}
+          bodyWrong={explain.bodyWrong}
           isCorrect={!!lastResult}
           onNext={() => setCurrentId(explain.next)}
         />
