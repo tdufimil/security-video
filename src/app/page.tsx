@@ -9,6 +9,11 @@ export default function TopPage() {
     router.push(url);
   };
 
+  const handleRandom = () => {
+    const random = Math.random() < 0.5 ? "/a" : "/b";
+    router.push(random);
+  };
+
   return (
     <div className="relative w-screen h-screen overflow-hidden">
       {/* 背景画像 */}
@@ -31,6 +36,12 @@ export default function TopPage() {
           className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
         >
           パターンB(事前予告なし)
+        </button>
+        <button
+          onClick={handleRandom}
+          className="px-10 py-6 bg-blue-600 text-white text-2xl font-bold rounded-xl shadow-lg hover:bg-blue-700 transition hover:cursor-pointer"
+        >
+          ランダム
         </button>
       </div>
     </div>
