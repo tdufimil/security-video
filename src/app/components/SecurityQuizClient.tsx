@@ -2,18 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useStepController } from "../../../hooks/useStepController";
-import QuizScreen from "../components/QuizScreen";
-import VideoComponent from "../components/VideoComponent";
-
+import QuizScreen from "./QuizScreen";
+import VideoComponent from "./VideoComponent";
 import { useHeartRate } from "../../../hooks/useHeartRate";
-import FakeScanProgress from "../components/FakeScanProgress";
-import FakeSupportScamScreen from "../components/FakeSupportScamScreen";
-import NotifyPopup from "../components/NotifyPopup";
-import ScoreSummary from "../components/ScoreSummary";
+import FakeScanProgress from "./FakeScanProgress";
+import FakeSupportScamScreen from "./FakeSupportScamScreen";
+import NotifyPopup from "./NotifyPopup";
+import ScoreSummary from "./ScoreSummary";
 import { computeHeartRateScore } from "../lib/heartRateScore";
-import ExplainSection from "../components/ExplainScreen";
+import ExplainSection from "./ExplainScreen";
 
-export default function SecurityQuiz() {
+export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   const {
     quiz,
     video,
@@ -25,7 +24,7 @@ export default function SecurityQuiz() {
     err,
     lastResult,
     setLastResult,
-  } = useStepController("/data/step.json");
+  } = useStepController(dataPath);
   const { devices, selected, subscribe, disconnect, samples, hr } =
     useHeartRate("http://127.0.0.1:5000");
 
