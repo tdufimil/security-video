@@ -26,6 +26,9 @@ export default function ExplainSection({ answer, bodyCorrect, bodyWrong, onNext,
   const body = isCorrect ? bodyCorrect : bodyWrong;
 
   const blocks = useMemo(() => {
+    // bodyがundefinedの場合は空配列を返す
+    if (!body) return [];
+
     const paragraphs = body.split(/\n{2,}/g).map((p) => p.trim()).filter(Boolean);
     return paragraphs.map((p) => {
       const lines = p.split(/\n/).map((l) => l.trim()).filter(Boolean);
@@ -33,6 +36,11 @@ export default function ExplainSection({ answer, bodyCorrect, bodyWrong, onNext,
       return { lines, isList: bulletLike >= 0.6 };
     });
   }, [body]);
+
+  // データが不完全な場合は何も表示しない
+  if (!body || !bodyCorrect || !bodyWrong) {
+    return null;
+  }
 
   // 色味とラベルを結果で切り替え
   const result = isCorrect ? "正解！" : "不正解";
