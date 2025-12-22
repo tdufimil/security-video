@@ -1,7 +1,7 @@
 // src/app/.../components/ScoreSummary.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   calcKnowledgeScore,
   calcJudgementScore,
@@ -19,6 +19,12 @@ import {
   Tooltip,
 } from "recharts";
 
+type SectionHR = {
+  sectionId: string;
+  startHR: number | null;
+  endHR: number | null;
+};
+
 type Props = {
   quizCorrectCount: number;
   isFirstTryCorrect: number;
@@ -26,6 +32,7 @@ type Props = {
   peakHR: number;
   actionSeconds: number;
   hrStddev: number;
+  sectionHRRecords: SectionHR[];
 };
 
 export default function ScoreSummary(props: Props) {
@@ -37,7 +44,19 @@ export default function ScoreSummary(props: Props) {
     peakHR: props.peakHR,
     actionSeconds: props.actionSeconds,
     hrStddev: props.hrStddev,
+    sectionHRRecords: props.sectionHRRecords,
   }));
+
+  // 結果画面表示時にセクション心拍数記録をコンソール出力
+  useEffect(() => {
+    console.log("=== セクション心拍数記録 ===");
+    frozen.sectionHRRecords.forEach((record) => {
+      console.log(
+        `セクション: ${record.sectionId} | 開始: ${record.startHR ?? "-"} bpm | 終了: ${record.endHR ?? "-"} bpm`
+      );
+    });
+    console.log("=========================");
+  }, []);
 
   // スコア計算（固定値から）
   const knowledge = calcKnowledgeScore(frozen.quizCorrectCount);

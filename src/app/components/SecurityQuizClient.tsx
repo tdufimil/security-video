@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStepController } from "../../../hooks/useStepController";
 import QuizScreen from "./QuizScreen";
 import VideoComponent from "./VideoComponent";
@@ -39,6 +39,15 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   const [actionSeconds, setActionSeconds] = useState<number | null>(null);
   const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<number>(100);
 
+  // セクション心拍数記録
+  type SectionHR = {
+    sectionId: string;
+    startHR: number | null;
+    endHR: number | null;
+  };
+  const [sectionHRRecords, setSectionHRRecords] = useState<SectionHR[]>([]);
+  const prevSectionRef = useRef<string | null>(null);
+
   // === quiz1 で心拍取得を開始 ===
   useEffect(() => {
     if (currentId === "quiz1" && devices.length > 0 && !selected) {
@@ -54,6 +63,38 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
       disconnect();
     }
   }, [currentId, selected, disconnect]);
+
+  // === セクション変更時に心拍数を記録 ===
+  useEffect(() => {
+    const prevSection = prevSectionRef.current;
+
+    // セクションが変わった場合
+    if (prevSection !== currentId) {
+      // 前のセクションの終了心拍数を記録
+      if (prevSection !== null) {
+        setSectionHRRecords((prev) => {
+          const updated = [...prev];
+          const lastRecord = updated[updated.length - 1];
+          if (lastRecord && lastRecord.sectionId === prevSection) {
+            lastRecord.endHR = hr;
+          }
+          return updated;
+        });
+      }
+
+      // 新しいセクションの開始心拍数を記録
+      setSectionHRRecords((prev) => [
+        ...prev,
+        {
+          sectionId: currentId,
+          startHR: hr,
+          endHR: null,
+        },
+      ]);
+
+      prevSectionRef.current = currentId;
+    }
+  }, [currentId, hr]);
 
   // ===  スコア計算 ===
   const scoreDetail = useMemo(() => computeHeartRateScore(samples), [samples]);
@@ -99,6 +140,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
           peakHR={peakHR}
           actionSeconds={actionSeconds ?? 0}
           hrStddev={hrStddev}
+          sectionHRRecords={sectionHRRecords}
         />
       </div>
     );
