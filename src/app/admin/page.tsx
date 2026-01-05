@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 
 const STORAGE_KEYS = {
-  stepA: "custom_step_json",
-  stepB: "custom_stepB_json",
+  scenarioA: "custom_scenarioA_json",
+  scenarioB: "custom_scenarioB_json",
 };
 
 const FILE_PATHS = {
-  stepA: "/data/step.json",
-  stepB: "/data/stepB.json",
+  scenarioA: "/data/scenarioA.json",
+  scenarioB: "/data/scenarioB.json",
 };
 
 export default function AdminPage() {
-  const [selectedFile, setSelectedFile] = useState<"stepA" | "stepB">("stepA");
+  const [selectedFile, setSelectedFile] = useState<"scenarioA" | "scenarioB">("scenarioA");
   const [jsonContent, setJsonContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -97,24 +97,24 @@ export default function AdminPage() {
           </label>
           <div className="flex gap-4">
             <button
-              onClick={() => setSelectedFile("stepA")}
+              onClick={() => setSelectedFile("scenarioA")}
               className={`px-4 py-2 rounded ${
-                selectedFile === "stepA"
+                selectedFile === "scenarioA"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              step.json (シナリオ A)
+              scenarioA.json (シナリオ A)
             </button>
             <button
-              onClick={() => setSelectedFile("stepB")}
+              onClick={() => setSelectedFile("scenarioB")}
               className={`px-4 py-2 rounded ${
-                selectedFile === "stepB"
+                selectedFile === "scenarioB"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
             >
-              stepB.json (シナリオ B)
+              scenarioB.json (シナリオ B)
             </button>
           </div>
           {isCustomized && (

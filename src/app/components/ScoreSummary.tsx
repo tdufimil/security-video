@@ -7,7 +7,6 @@ import {
   calcJudgementScore,
   calcCalmnessScore,
   calcSpeedScore,
-  calcStabilityScore,
 } from "../lib/scoreCalculator";
 import {
   RadarChart,
@@ -17,6 +16,12 @@ import {
   Radar,
   ResponsiveContainer,
   Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
 } from "recharts";
 
 type SectionHR = {
@@ -33,6 +38,7 @@ type Props = {
   actionSeconds: number;
   hrStddev: number;
   sectionHRRecords: SectionHR[];
+  sectionHistory: string[];
 };
 
 export default function ScoreSummary(props: Props) {
@@ -45,6 +51,7 @@ export default function ScoreSummary(props: Props) {
     actionSeconds: props.actionSeconds,
     hrStddev: props.hrStddev,
     sectionHRRecords: props.sectionHRRecords,
+    sectionHistory: props.sectionHistory,
   }));
 
   // 結果画面表示時にセクション心拍数記録をコンソール出力
@@ -63,9 +70,8 @@ export default function ScoreSummary(props: Props) {
   const judgment = calcJudgementScore(frozen.isFirstTryCorrect);
   const calmness = calcCalmnessScore(frozen.baseHR, frozen.peakHR);
   const speed = calcSpeedScore(frozen.actionSeconds);
-  const stability = calcStabilityScore(frozen.hrStddev);
   const overall = Math.round(
-    (knowledge + judgment + calmness + speed + stability) / 5
+    (knowledge + judgment + calmness + speed) / 4
   );
 
   const data = [
@@ -73,8 +79,16 @@ export default function ScoreSummary(props: Props) {
     { axis: "判断力", value: judgment },
     { axis: "冷静さ", value: calmness },
     { axis: "行動速度", value: speed },
-    { axis: "安定性", value: stability },
   ];
+
+  // 心拍数推移グラフ用データ（体験したセクションのみフィルタリング）
+  const heartRateData = frozen.sectionHRRecords
+    .filter((record) => frozen.sectionHistory.includes(record.sectionId))
+    .map((record) => ({
+      section: record.sectionId,
+      開始: record.startHR,
+      終了: record.endHR,
+    }));
 
   return (
     <div className="relative w-full max-w-5xl mx-auto p-6">
@@ -97,13 +111,12 @@ export default function ScoreSummary(props: Props) {
           </span>
         </header>
 
-        {/* 上段：カード5枚 */}
-        <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
+        {/* 上段：カード4枚 */}
+        <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <NeonCard label="知識力" value={knowledge} accent="cyan" />
           <NeonCard label="判断力" value={judgment} accent="emerald" />
           <NeonCard label="冷静さ" value={calmness} accent="violet" />
           <NeonCard label="行動速度" value={speed} accent="fuchsia" />
-          <NeonCard label="安定性" value={stability} accent="sky" />
         </div>
 
         {/* 中段：レーダーチャート */}
@@ -158,6 +171,71 @@ export default function ScoreSummary(props: Props) {
             <span className="text-5xl md:text-6xl font-extrabold text-emerald-200 drop-shadow-lg">
               {overall}
             </span>
+          </div>
+        </div>
+
+        {/* 心拍数推移グラフ */}
+        <div className="px-6 pb-6 pt-2">
+          <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 md:p-6 shadow-[inset_0_0_20px_rgba(34,211,238,0.08)]">
+            <h3 className="text-lg md:text-xl font-semibold text-cyan-100 mb-4">
+              セクション別心拍数推移
+            </h3>
+            <div className="h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={heartRateData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(34,211,238,0.15)"
+                  />
+                  <XAxis
+                    dataKey="section"
+                    tick={{ fill: "rgba(190,242,255,0.95)", fontSize: 11 }}
+                    stroke="rgba(34,211,238,0.3)"
+                  />
+                  <YAxis
+                    domain={[0, "auto"]}
+                    tick={{ fill: "rgba(165,243,252,0.7)", fontSize: 10 }}
+                    stroke="rgba(34,211,238,0.3)"
+                    label={{
+                      value: "心拍数 (bpm)",
+                      angle: -90,
+                      position: "insideLeft",
+                      style: { fill: "rgba(190,242,255,0.8)", fontSize: 12 },
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: "rgba(2,6,23,0.9)",
+                      border: "1px solid rgba(34,211,238,0.3)",
+                      borderRadius: 12,
+                      color: "#CFFAFE",
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      paddingTop: "10px",
+                      color: "#CFFAFE",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="開始"
+                    stroke="rgba(34,211,238,0.9)"
+                    strokeWidth={2}
+                    dot={{ fill: "rgba(34,211,238,1)", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="終了"
+                    stroke="rgba(251,146,60,0.9)"
+                    strokeWidth={2}
+                    dot={{ fill: "rgba(251,146,60,1)", r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
       </div>

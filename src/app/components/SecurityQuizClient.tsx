@@ -39,6 +39,9 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   const [actionSeconds, setActionSeconds] = useState<number | null>(null);
   const [isFirstTryCorrect, setIsFirstTryCorrect] = useState<number>(100);
 
+  // セクション履歴管理
+  const [sectionHistory, setSectionHistory] = useState<string[]>(["start"]);
+
   // セクション心拍数記録
   type SectionHR = {
     sectionId: string;
@@ -64,12 +67,20 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
     }
   }, [currentId, selected, disconnect]);
 
-  // === セクション変更時に心拍数を記録 ===
+  // === セクション変更時に心拍数を記録 & 履歴に追加 ===
   useEffect(() => {
     const prevSection = prevSectionRef.current;
 
     // セクションが変わった場合
     if (prevSection !== currentId) {
+      // 履歴に追加（重複を避ける）
+      setSectionHistory((prev) => {
+        if (prev[prev.length - 1] !== currentId) {
+          return [...prev, currentId];
+        }
+        return prev;
+      });
+
       // 前のセクションの終了心拍数を記録
       if (prevSection !== null) {
         setSectionHRRecords((prev) => {
@@ -102,7 +113,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   // 仮データ（本番はpropsやcontextから取得）
   const baseHR = 70; // 例: 平常時心拍
   const peakHR = hr ?? 90; // 例: 体験時心拍
-  const hrStddev = scoreDetail.std ?? 8; // 例: 心拍標準偏差
+  const hrStddev = scoreDetail.std ?? 8; // 心拍標準偏差
 
   // FakeSupportScamScreen から「正解」通知（ESC長押し）を受けたら
   const handleQuiz2Result = (
@@ -132,7 +143,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   }
   if (!quiz && !video && !demo && currentId == "end") {
     return (
-      <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-slate-900/70">
+      <div className="relative w-screen h-screen overflow-y-auto flex items-start justify-center bg-slate-900/70 py-6">
         <ScoreSummary
           quizCorrectCount={quizCorrectCount}
           isFirstTryCorrect={isFirstTryCorrect}
@@ -141,6 +152,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
           actionSeconds={actionSeconds ?? 0}
           hrStddev={hrStddev}
           sectionHRRecords={sectionHRRecords}
+          sectionHistory={sectionHistory}
         />
       </div>
     );
@@ -148,6 +160,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
 
   return (
     <div className="relative w-screen min-h-screen overflow-hidden">
+      {/* 心拍数表示 */}
       <div className="absolute top-3 right-3 z-50 rounded bg-black/50 text-white px-3 py-2 text-sm space-y-1">
         <div>HR: {hr ?? "-"} bpm</div>
       </div>
@@ -179,13 +192,15 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
       {/* ---- Demo：偽サポート画面＋スキャン＋通知 ---- */}
       {demo?.isShow && (
         <>
-          <div className="absolute inset-0 z-0">
-            <img
-              src="/images/mrcl-screenshot.jpg"
-              alt="mrcl screenshot background"
-              className="w-full h-full object-cover"
-            />
-          </div>
+          {demo.backgroundImage && (
+            <div className="absolute inset-0 z-0">
+              <img
+                src={demo.backgroundImage}
+                alt="background"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           <FakeSupportScamScreen
             onResult={handleQuiz2Result}
             setShowQuiz={setShowQuiz}

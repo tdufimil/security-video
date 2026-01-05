@@ -1,0 +1,73 @@
+{
+  "scenarioName": "サポート詐欺体験シナリオC（動作確認用）",
+  "biometricData": "heartRate",
+  "steps": [
+    {
+      "type": "video",
+      "id": "start",
+      "src": "/video/withPreview.mp4",
+      "next": "quiz1"
+    },
+    {
+      "type": "quiz",
+      "id": "quiz1",
+      "question": "PCでインターネットを見ている最中、突然「ピー！」という警告音と共に「ウイルスに感染しました！今すぐお電話ください！ 010-XXXX-XXXX」という画面が表示されました。このとき、最初にとるべき正しい行動はどれでしょう？",
+      "image": ["images/quiz2.png"],
+      "options": [
+        {
+          "id": "1",
+          "option": "画面に表示された電話番号に電話し、サポート担当者の指示に従う。"
+        },
+        {
+          "id": "2",
+          "option": "ウイルスを駆除するため、画面に表示されている「OK」や「スキャン開始」ボタンを押す。"
+        },
+        { "id": "3", "option": "ブラウザ（インターネットの画面）を閉じる。" },
+        {
+          "id": "4",
+          "option": "本当に感染したか確かめるため、PCで自分のメールやSNSを開いてみる。"
+        }
+      ],
+      "correct": "3",
+      "next": "explain_quiz1"
+    },
+    {
+      "type": "explain",
+      "id": "explain_quiz1",
+      "answer": "3. ブラウザ（インターネットの画面）を閉じる。",
+      "bodyCorrect": "正解です！これは、あなたを騙そうとする「サポート詐欺」の手口です。警告音や警告画面は、あなたを焦らせて電話をかけさせ、お金をだまし取るためのウソです。詐欺画面が出てきたら、まずは Esc キーを押す。それでも無理そうなら電源を切るか再起動をしましょう。",
+      "bodyWrong": "これは、あなたを騙そうとする「サポート詐欺」の手口です。警告音や警告画面は、あなたを焦らせて電話をかけさせ、お金をだまし取るためのウソです。詐欺画面が出てきたら、まずは Esc キーを押す。それでも無理そうなら電源を切るか再起動をしましょう。焦らず冷静に対応することが重要です。",
+      "next": "demo"
+    },
+    {
+      "type": "demo",
+      "id": "demo",
+      "question": "この画面ではどの操作をすべき？",
+      "image": "/images/scam_ui.png",
+      "backgroundImage": "/images/mrcl-screenshot.jpg",
+      "contentType": "supportScam",
+      "options": ["再起動", "電話", "見てもらう", "ESC"],
+      "correct": ["再起動", "ESC"],
+      "videoCorrect": "correct1",
+      "videoWrong": "wrong1",
+      "retryOnFail": true,
+      "next": "end"
+    },
+    {
+      "type": "video",
+      "id": "correct1",
+      "src": "/video/correct1.mp4",
+      "next": "end"
+    },
+    {
+      "type": "video",
+      "id": "wrong1",
+      "src": "/video/wrong1.mp4",
+      "next": "demo"
+    },
+    {
+      "type": "end",
+      "id": "end"
+    }
+  ]
+}

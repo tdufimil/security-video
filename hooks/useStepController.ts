@@ -12,7 +12,7 @@ type RawStep =
       options: RawOption[];
       image?: string[];
       correct: string;
-      nextId: string;
+      next: string;
     }
   | { id: string; type: "video"; src?: string; next: string }
   | {
@@ -23,9 +23,11 @@ type RawStep =
       retryOnFail?: boolean;
       videoCorrect: string;
       videoWrong: string;
-      nextId: string;
+      next: string;
+      backgroundImage?: string;
+      contentType?: string;
     }
-  | { id: string; type: "explain"; answer: string; bodyCorrect: string; bodyWrong: string; nextId: string }
+  | { id: string; type: "explain"; answer: string; bodyCorrect: string; bodyWrong: string; next: string }
   | { id: string; type: "end" };
 
 export type Quiz = {
@@ -47,6 +49,8 @@ export type Demo = {
   videoCorrect: string;
   videoWrong: string;
   next: string;
+  backgroundImage?: string;
+  contentType?: string;
 };
 export type Explain = {
   id: string;
@@ -115,7 +119,7 @@ export const useStepController = (url: string) => {
           .filter((o) => o.option),
         image: s.image,
         correct: s.correct,
-        next: s.nextId,
+        next: s.next,
       });
       return;
     }
@@ -134,7 +138,9 @@ export const useStepController = (url: string) => {
         retryOnFail: s.retryOnFail ?? false,
         videoCorrect: s.videoCorrect,
         videoWrong: s.videoWrong,
-        next: s.nextId,
+        next: s.next,
+        backgroundImage: s.backgroundImage,
+        contentType: s.contentType,
       });
       return;
     }
@@ -146,7 +152,7 @@ export const useStepController = (url: string) => {
         answer: s.answer,
         bodyCorrect: s.bodyCorrect,
         bodyWrong: s.bodyWrong,
-        next: s.nextId,
+        next: s.next,
       });
       console.log(explain);
       return;
