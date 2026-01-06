@@ -54,3 +54,50 @@ export function computeHeartRateScore(
 
   return { avg, peak, std, reactivity, score };
 }
+
+/**
+ * 安定性スコアを計算
+ * 心拍数が平常時の水準に戻るまでの回復時間を計算
+ * @param samples 心拍数サンプルの配列
+ * @param baselineHR 平常時の心拍数（この値±閾値を「回復」とみなす）
+ * @param threshold 回復と判定する閾値（デフォルト: ±5bpm）
+ * @returns 回復時間（秒）、回復していない場合はnull
+ */
+export function computeRecoveryTime(
+  samples: HeartRateSample[],
+  baselineHR: number = 70,
+  threshold: number = 5
+): number | null {
+  if (samples.length < 2) {
+    return null;
+  }
+
+  // ピーク心拍数とその時刻を検出
+  let peakHR = -Infinity;
+  let peakTime = 0;
+
+  for (const sample of samples) {
+    if (Number.isFinite(sample.hr) && sample.hr > peakHR) {
+      peakHR = sample.hr;
+      peakTime = sample.t;
+    }
+  }
+
+  // ピークがベースラインより高くない場合は回復時間なし
+  if (peakHR <= baselineHR + threshold) {
+    return 0;
+  }
+
+  // ピーク以降のサンプルで、ベースライン±閾値に戻った時刻を検索
+  for (const sample of samples) {
+    if (sample.t > peakTime && Number.isFinite(sample.hr)) {
+      if (Math.abs(sample.hr - baselineHR) <= threshold) {
+        // 回復時間を秒単位で返す
+        return (sample.t - peakTime) / 1000;
+      }
+    }
+  }
+
+  // 最後まで回復しなかった場合はnull
+  return null;
+}

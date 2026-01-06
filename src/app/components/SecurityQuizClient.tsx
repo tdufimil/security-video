@@ -9,7 +9,7 @@ import FakeScanProgress from "./FakeScanProgress";
 import FakeSupportScamScreen from "./FakeSupportScamScreen";
 import NotifyPopup from "./NotifyPopup";
 import ScoreSummary from "./ScoreSummary";
-import { computeHeartRateScore } from "../lib/heartRateScore";
+import { computeHeartRateScore, computeRecoveryTime } from "../lib/heartRateScore";
 import ExplainSection from "./ExplainScreen";
 
 export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
@@ -113,7 +113,12 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   // 仮データ（本番はpropsやcontextから取得）
   const baseHR = 70; // 例: 平常時心拍
   const peakHR = hr ?? 90; // 例: 体験時心拍
-  const hrStddev = scoreDetail.std ?? 8; // 心拍標準偏差
+
+  // 回復時間の計算（平常時心拍数±5bpmを回復とみなす）
+  const recoveryTimeSeconds = useMemo(() =>
+    computeRecoveryTime(samples, baseHR, 5),
+    [samples, baseHR]
+  );
 
   // FakeSupportScamScreen から「正解」通知（ESC長押し）を受けたら
   const handleQuiz2Result = (
@@ -150,7 +155,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
           baseHR={baseHR}
           peakHR={peakHR}
           actionSeconds={actionSeconds ?? 0}
-          hrStddev={hrStddev}
+          recoveryTimeSeconds={recoveryTimeSeconds}
           sectionHRRecords={sectionHRRecords}
           sectionHistory={sectionHistory}
         />

@@ -37,7 +37,7 @@ type Props = {
   baseHR: number;
   peakHR: number;
   actionSeconds: number;
-  hrStddev: number;
+  recoveryTimeSeconds: number | null;
   sectionHRRecords: SectionHR[];
   sectionHistory: string[];
 };
@@ -50,7 +50,7 @@ export default function ScoreSummary(props: Props) {
     baseHR: props.baseHR,
     peakHR: props.peakHR,
     actionSeconds: props.actionSeconds,
-    hrStddev: props.hrStddev,
+    recoveryTimeSeconds: props.recoveryTimeSeconds,
     sectionHRRecords: props.sectionHRRecords,
     sectionHistory: props.sectionHistory,
   }));
@@ -60,7 +60,9 @@ export default function ScoreSummary(props: Props) {
     console.log("=== セクション心拍数記録 ===");
     frozen.sectionHRRecords.forEach((record) => {
       console.log(
-        `セクション: ${record.sectionId} | 開始: ${record.startHR ?? "-"} bpm | 終了: ${record.endHR ?? "-"} bpm`
+        `セクション: ${record.sectionId} | 開始: ${
+          record.startHR ?? "-"
+        } bpm | 終了: ${record.endHR ?? "-"} bpm`
       );
     });
     console.log("=========================");
@@ -71,7 +73,7 @@ export default function ScoreSummary(props: Props) {
   const judgment = calcJudgementScore(frozen.isFirstTryCorrect);
   const calmness = calcCalmnessScore(frozen.baseHR, frozen.peakHR);
   const speed = calcSpeedScore(frozen.actionSeconds);
-  const stability = calcStabilityScore(frozen.hrStddev);
+  const stability = calcStabilityScore(frozen.recoveryTimeSeconds);
   const overall = Math.round(
     (knowledge + judgment + calmness + speed + stability) / 5
   );
@@ -79,9 +81,9 @@ export default function ScoreSummary(props: Props) {
   const data = [
     { axis: "知識力", value: knowledge },
     { axis: "判断力", value: judgment },
-    { axis: "冷静さ", value: calmness },
     { axis: "行動速度", value: speed },
-    { axis: "心拍数が平常時の水準に戻るまでの回復時間", value: stability },
+    { axis: "冷静さ", value: calmness },
+    { axis: "安定性", value: stability },
   ];
 
   // 心拍数推移グラフ用データ（体験したセクションのみフィルタリング）
@@ -94,7 +96,9 @@ export default function ScoreSummary(props: Props) {
     }));
 
   // Y軸の目盛りを20bpm刻みで生成
-  const allHRValues = heartRateData.flatMap((d) => [d.開始, d.終了]).filter((v) => v !== null) as number[];
+  const allHRValues = heartRateData
+    .flatMap((d) => [d.開始, d.終了])
+    .filter((v) => v !== null) as number[];
   const maxHR = allHRValues.length > 0 ? Math.max(...allHRValues) : 120;
   const yAxisTicks = [];
   for (let i = 0; i <= Math.ceil(maxHR / 20) * 20; i += 20) {
@@ -126,9 +130,9 @@ export default function ScoreSummary(props: Props) {
         <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           <NeonCard label="知識力" value={knowledge} accent="cyan" />
           <NeonCard label="判断力" value={judgment} accent="emerald" />
-          <NeonCard label="冷静さ" value={calmness} accent="violet" />
           <NeonCard label="行動速度" value={speed} accent="fuchsia" />
-          <NeonCard label="心拍回復" value={stability} accent="sky" />
+          <NeonCard label="冷静さ" value={calmness} accent="violet" />
+          <NeonCard label="安定性" value={stability} accent="sky" />
         </div>
 
         {/* 中段：レーダーチャート */}
@@ -224,7 +228,7 @@ export default function ScoreSummary(props: Props) {
                       style: {
                         fill: "rgba(190,242,255,0.9)",
                         fontSize: 13,
-                        fontWeight: 500
+                        fontWeight: 500,
                       },
                     }}
                   />
@@ -264,7 +268,7 @@ export default function ScoreSummary(props: Props) {
                       fill: "rgba(34,211,238,1)",
                       stroke: "rgba(255,255,255,0.3)",
                       strokeWidth: 2,
-                      r: 6
+                      r: 6,
                     }}
                     activeDot={{
                       r: 8,
@@ -283,7 +287,7 @@ export default function ScoreSummary(props: Props) {
                       fill: "rgba(251,146,60,1)",
                       stroke: "rgba(255,255,255,0.3)",
                       strokeWidth: 2,
-                      r: 6
+                      r: 6,
                     }}
                     activeDot={{
                       r: 8,

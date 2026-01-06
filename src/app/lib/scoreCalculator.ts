@@ -62,12 +62,25 @@ export function calcSpeedScore(seconds: number): number {
   return 50; // 25s+
 }
 
-export function calcStabilityScore(stddev: number): number {
-  // マイナス/NaN対策（標準偏差は0以上）
-  const sd = clamp(num(stddev), 0);
-  if (sd <= 4)  return 100;
-  if (sd <= 7)  return 90;
-  if (sd <= 10) return 80;
-  if (sd <= 13) return 70;
-  return 60; // 13.1+
+export function calcStabilityScore(recoveryTimeSeconds: number | null): number {
+  // null（回復しなかった）または負の値の場合は低得点
+  if (recoveryTimeSeconds === null || recoveryTimeSeconds < 0) {
+    return 40;
+  }
+
+  // 0秒（ストレスなし）の場合は満点
+  if (recoveryTimeSeconds === 0) {
+    return 100;
+  }
+
+  const seconds = clamp(num(recoveryTimeSeconds), 0);
+
+  // 回復時間に基づくスコアリング（早いほど高得点）
+  if (seconds <= 10)  return 100;  // 10秒以内: 非常に優秀
+  if (seconds <= 20)  return 90;   // 20秒以内: 優秀
+  if (seconds <= 30)  return 80;   // 30秒以内: 良好
+  if (seconds <= 45)  return 70;   // 45秒以内: やや良好
+  if (seconds <= 60)  return 60;   // 60秒以内: 平均的
+  if (seconds <= 90)  return 50;   // 90秒以内: やや遅い
+  return 40; // 90秒超: 回復が遅い
 }
