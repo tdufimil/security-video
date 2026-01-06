@@ -7,6 +7,7 @@ import {
   calcJudgementScore,
   calcCalmnessScore,
   calcSpeedScore,
+  calcStabilityScore,
 } from "../lib/scoreCalculator";
 import {
   RadarChart,
@@ -70,8 +71,9 @@ export default function ScoreSummary(props: Props) {
   const judgment = calcJudgementScore(frozen.isFirstTryCorrect);
   const calmness = calcCalmnessScore(frozen.baseHR, frozen.peakHR);
   const speed = calcSpeedScore(frozen.actionSeconds);
+  const stability = calcStabilityScore(frozen.hrStddev);
   const overall = Math.round(
-    (knowledge + judgment + calmness + speed) / 4
+    (knowledge + judgment + calmness + speed + stability) / 5
   );
 
   const data = [
@@ -79,6 +81,7 @@ export default function ScoreSummary(props: Props) {
     { axis: "判断力", value: judgment },
     { axis: "冷静さ", value: calmness },
     { axis: "行動速度", value: speed },
+    { axis: "心拍数が平常時の水準に戻るまでの回復時間", value: stability },
   ];
 
   // 心拍数推移グラフ用データ（体験したセクションのみフィルタリング）
@@ -89,6 +92,14 @@ export default function ScoreSummary(props: Props) {
       開始: record.startHR,
       終了: record.endHR,
     }));
+
+  // Y軸の目盛りを20bpm刻みで生成
+  const allHRValues = heartRateData.flatMap((d) => [d.開始, d.終了]).filter((v) => v !== null) as number[];
+  const maxHR = allHRValues.length > 0 ? Math.max(...allHRValues) : 120;
+  const yAxisTicks = [];
+  for (let i = 0; i <= Math.ceil(maxHR / 20) * 20; i += 20) {
+    yAxisTicks.push(i);
+  }
 
   return (
     <div className="relative w-full max-w-5xl mx-auto p-6">
@@ -111,12 +122,13 @@ export default function ScoreSummary(props: Props) {
           </span>
         </header>
 
-        {/* 上段：カード4枚 */}
-        <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* 上段：カード5枚 */}
+        <div className="px-6 pb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           <NeonCard label="知識力" value={knowledge} accent="cyan" />
           <NeonCard label="判断力" value={judgment} accent="emerald" />
           <NeonCard label="冷静さ" value={calmness} accent="violet" />
           <NeonCard label="行動速度" value={speed} accent="fuchsia" />
+          <NeonCard label="心拍回復" value={stability} accent="sky" />
         </div>
 
         {/* 中段：レーダーチャート */}
@@ -177,61 +189,108 @@ export default function ScoreSummary(props: Props) {
         {/* 心拍数推移グラフ */}
         <div className="px-6 pb-6 pt-2">
           <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 md:p-6 shadow-[inset_0_0_20px_rgba(34,211,238,0.08)]">
-            <h3 className="text-lg md:text-xl font-semibold text-cyan-100 mb-4">
+            <h3 className="text-lg md:text-xl font-semibold text-cyan-100 mb-6">
               セクション別心拍数推移
             </h3>
-            <div className="h-[280px] w-full">
+            <div className="h-[380px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={heartRateData}>
+                <LineChart
+                  data={heartRateData}
+                  margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+                >
                   <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(34,211,238,0.15)"
+                    strokeDasharray="4 4"
+                    stroke="rgba(34,211,238,0.25)"
+                    strokeWidth={1}
                   />
                   <XAxis
                     dataKey="section"
-                    tick={{ fill: "rgba(190,242,255,0.95)", fontSize: 11 }}
-                    stroke="rgba(34,211,238,0.3)"
+                    tick={{ fill: "rgba(190,242,255,0.95)", fontSize: 13 }}
+                    stroke="rgba(34,211,238,0.4)"
+                    height={60}
+                    angle={-15}
+                    textAnchor="end"
                   />
                   <YAxis
                     domain={[0, "auto"]}
-                    tick={{ fill: "rgba(165,243,252,0.7)", fontSize: 10 }}
-                    stroke="rgba(34,211,238,0.3)"
+                    ticks={yAxisTicks}
+                    tick={{ fill: "rgba(165,243,252,0.85)", fontSize: 12 }}
+                    stroke="rgba(34,211,238,0.4)"
+                    width={60}
                     label={{
                       value: "心拍数 (bpm)",
                       angle: -90,
                       position: "insideLeft",
-                      style: { fill: "rgba(190,242,255,0.8)", fontSize: 12 },
+                      style: {
+                        fill: "rgba(190,242,255,0.9)",
+                        fontSize: 13,
+                        fontWeight: 500
+                      },
                     }}
                   />
                   <Tooltip
                     contentStyle={{
-                      background: "rgba(2,6,23,0.9)",
-                      border: "1px solid rgba(34,211,238,0.3)",
+                      background: "rgba(2,6,23,0.95)",
+                      border: "1px solid rgba(34,211,238,0.5)",
                       borderRadius: 12,
                       color: "#CFFAFE",
+                      padding: "12px",
+                      fontSize: "13px",
+                    }}
+                    labelStyle={{
+                      color: "#A5F3FC",
+                      fontWeight: 600,
+                      marginBottom: "6px",
+                    }}
+                    itemStyle={{
+                      padding: "4px 0",
                     }}
                   />
                   <Legend
                     wrapperStyle={{
-                      paddingTop: "10px",
-                      color: "#CFFAFE",
+                      paddingTop: "15px",
                     }}
+                    iconType="line"
+                    iconSize={20}
+                    reversed={true}
                   />
                   <Line
                     type="monotone"
                     dataKey="開始"
-                    stroke="rgba(34,211,238,0.9)"
-                    strokeWidth={2}
-                    dot={{ fill: "rgba(34,211,238,1)", r: 4 }}
-                    activeDot={{ r: 6 }}
+                    name="開始時"
+                    stroke="rgba(34,211,238,1)"
+                    strokeWidth={3}
+                    dot={{
+                      fill: "rgba(34,211,238,1)",
+                      stroke: "rgba(255,255,255,0.3)",
+                      strokeWidth: 2,
+                      r: 6
+                    }}
+                    activeDot={{
+                      r: 8,
+                      fill: "rgba(34,211,238,1)",
+                      stroke: "rgba(255,255,255,0.5)",
+                      strokeWidth: 2,
+                    }}
                   />
                   <Line
                     type="monotone"
                     dataKey="終了"
-                    stroke="rgba(251,146,60,0.9)"
-                    strokeWidth={2}
-                    dot={{ fill: "rgba(251,146,60,1)", r: 4 }}
-                    activeDot={{ r: 6 }}
+                    name="終了時"
+                    stroke="rgba(251,146,60,1)"
+                    strokeWidth={3}
+                    dot={{
+                      fill: "rgba(251,146,60,1)",
+                      stroke: "rgba(255,255,255,0.3)",
+                      strokeWidth: 2,
+                      r: 6
+                    }}
+                    activeDot={{
+                      r: 8,
+                      fill: "rgba(251,146,60,1)",
+                      stroke: "rgba(255,255,255,0.5)",
+                      strokeWidth: 2,
+                    }}
                   />
                 </LineChart>
               </ResponsiveContainer>
