@@ -256,7 +256,6 @@ export default function ScoreSummary(props: Props) {
                     }}
                     iconType="line"
                     iconSize={20}
-                    reversed={true}
                   />
                   <Line
                     type="monotone"
