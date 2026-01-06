@@ -17,12 +17,6 @@ import {
   Radar,
   ResponsiveContainer,
   Tooltip,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
 } from "recharts";
 
 type SectionHR = {
@@ -86,7 +80,7 @@ export default function ScoreSummary(props: Props) {
     { axis: "安定性", value: stability },
   ];
 
-  // 心拍数推移グラフ用データ（体験したセクションのみフィルタリング）
+  // 心拍数推移テーブル用データ（体験したセクションのみフィルタリング）
   const heartRateData = frozen.sectionHRRecords
     .filter((record) => frozen.sectionHistory.includes(record.sectionId))
     .map((record) => ({
@@ -94,16 +88,6 @@ export default function ScoreSummary(props: Props) {
       開始: record.startHR,
       終了: record.endHR,
     }));
-
-  // Y軸の目盛りを20bpm刻みで生成
-  const allHRValues = heartRateData
-    .flatMap((d) => [d.開始, d.終了])
-    .filter((v) => v !== null) as number[];
-  const maxHR = allHRValues.length > 0 ? Math.max(...allHRValues) : 120;
-  const yAxisTicks = [];
-  for (let i = 0; i <= Math.ceil(maxHR / 20) * 20; i += 20) {
-    yAxisTicks.push(i);
-  }
 
   return (
     <div className="relative w-full max-w-5xl mx-auto p-6">
@@ -190,113 +174,108 @@ export default function ScoreSummary(props: Props) {
           </div>
         </div>
 
-        {/* 心拍数推移グラフ */}
+        {/* 心拍数推移テーブル */}
         <div className="px-6 pb-6 pt-2">
-          <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 md:p-6 shadow-[inset_0_0_20px_rgba(34,211,238,0.08)]">
-            <h3 className="text-lg md:text-xl font-semibold text-cyan-100 mb-6">
+          <div className="rounded-2xl border border-cyan-400/30 bg-white/95 p-4 md:p-6 shadow-lg">
+            <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-4">
               セクション別心拍数推移
             </h3>
-            <div className="h-[380px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={heartRateData}
-                  margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="4 4"
-                    stroke="rgba(34,211,238,0.25)"
-                    strokeWidth={1}
-                  />
-                  <XAxis
-                    dataKey="section"
-                    tick={{ fill: "rgba(190,242,255,0.95)", fontSize: 13 }}
-                    stroke="rgba(34,211,238,0.4)"
-                    height={60}
-                    angle={-15}
-                    textAnchor="end"
-                  />
-                  <YAxis
-                    domain={[0, "auto"]}
-                    ticks={yAxisTicks}
-                    tick={{ fill: "rgba(165,243,252,0.85)", fontSize: 12 }}
-                    stroke="rgba(34,211,238,0.4)"
-                    width={60}
-                    label={{
-                      value: "心拍数 (bpm)",
-                      angle: -90,
-                      position: "insideLeft",
-                      style: {
-                        fill: "rgba(190,242,255,0.9)",
-                        fontSize: 13,
-                        fontWeight: 500,
-                      },
-                    }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "rgba(2,6,23,0.95)",
-                      border: "1px solid rgba(34,211,238,0.5)",
-                      borderRadius: 12,
-                      color: "#CFFAFE",
-                      padding: "12px",
-                      fontSize: "13px",
-                    }}
-                    labelStyle={{
-                      color: "#A5F3FC",
-                      fontWeight: 600,
-                      marginBottom: "6px",
-                    }}
-                    itemStyle={{
-                      padding: "4px 0",
-                    }}
-                  />
-                  <Legend
-                    wrapperStyle={{
-                      paddingTop: "15px",
-                    }}
-                    iconType="line"
-                    iconSize={20}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="開始"
-                    name="開始時"
-                    stroke="rgba(34,211,238,1)"
-                    strokeWidth={3}
-                    dot={{
-                      fill: "rgba(34,211,238,1)",
-                      stroke: "rgba(255,255,255,0.3)",
-                      strokeWidth: 2,
-                      r: 6,
-                    }}
-                    activeDot={{
-                      r: 8,
-                      fill: "rgba(34,211,238,1)",
-                      stroke: "rgba(255,255,255,0.5)",
-                      strokeWidth: 2,
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="終了"
-                    name="終了時"
-                    stroke="rgba(251,146,60,1)"
-                    strokeWidth={3}
-                    dot={{
-                      fill: "rgba(251,146,60,1)",
-                      stroke: "rgba(255,255,255,0.3)",
-                      strokeWidth: 2,
-                      r: 6,
-                    }}
-                    activeDot={{
-                      r: 8,
-                      fill: "rgba(251,146,60,1)",
-                      stroke: "rgba(255,255,255,0.5)",
-                      strokeWidth: 2,
-                    }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-gradient-to-r from-cyan-100 to-blue-100">
+                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 border-b-2 border-cyan-300">
+                      セクション
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-bold text-gray-700 border-b-2 border-cyan-300">
+                      開始時 (bpm)
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-bold text-gray-700 border-b-2 border-cyan-300">
+                      終了時 (bpm)
+                    </th>
+                    <th className="px-4 py-3 text-center text-sm font-bold text-gray-700 border-b-2 border-cyan-300">
+                      変化
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {heartRateData.map((record, index) => {
+                    const change = record.終了 !== null && record.開始 !== null
+                      ? record.終了 - record.開始
+                      : null;
+                    const isIncrease = change !== null && change > 0;
+                    const isDecrease = change !== null && change < 0;
+
+                    return (
+                      <tr
+                        key={index}
+                        className={`${
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        } hover:bg-cyan-50 transition-colors`}
+                      >
+                        <td className="px-4 py-3 text-sm font-medium text-gray-800 border-b border-gray-200">
+                          {record.section}
+                        </td>
+                        <td className="px-4 py-3 text-center border-b border-gray-200">
+                          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 font-semibold rounded-lg text-sm">
+                            {record.開始 ?? "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center border-b border-gray-200">
+                          <span className="inline-block px-3 py-1 bg-orange-100 text-orange-800 font-semibold rounded-lg text-sm">
+                            {record.終了 ?? "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center border-b border-gray-200">
+                          {change !== null ? (
+                            <div className="flex items-center justify-center gap-1">
+                              {isIncrease && (
+                                <span className="inline-flex items-center px-3 py-1 bg-red-100 text-red-700 font-bold rounded-lg text-sm">
+                                  <span className="mr-1">↑</span>
+                                  +{change}
+                                </span>
+                              )}
+                              {isDecrease && (
+                                <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 font-bold rounded-lg text-sm">
+                                  <span className="mr-1">↓</span>
+                                  {change}
+                                </span>
+                              )}
+                              {change === 0 && (
+                                <span className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 font-bold rounded-lg text-sm">
+                                  →
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 凡例 */}
+            <div className="mt-4 flex flex-wrap gap-4 justify-center text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 bg-blue-100 border border-blue-300 rounded"></span>
+                <span className="text-gray-700 font-medium">開始時</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-4 h-4 bg-orange-100 border border-orange-300 rounded"></span>
+                <span className="text-gray-700 font-medium">終了時</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block px-2 py-0.5 bg-red-100 text-red-700 font-bold rounded">↑</span>
+                <span className="text-gray-700 font-medium">上昇</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 font-bold rounded">↓</span>
+                <span className="text-gray-700 font-medium">低下</span>
+              </div>
             </div>
           </div>
         </div>
