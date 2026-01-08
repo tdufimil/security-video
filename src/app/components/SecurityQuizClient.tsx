@@ -9,7 +9,7 @@ import FakeScanProgress from "./FakeScanProgress";
 import FakeSupportScamScreen from "./FakeSupportScamScreen";
 import NotifyPopup from "./NotifyPopup";
 import ScoreSummary from "./ScoreSummary";
-import { computeHeartRateScore, computeRecoveryTime } from "../lib/heartRateScore";
+import { computeRecoveryTime } from "../lib/heartRateScore";
 import ExplainSection from "./ExplainScreen";
 
 export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
@@ -25,13 +25,15 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
     lastResult,
     setLastResult,
   } = useStepController(dataPath);
-  const { devices, selected, subscribe, disconnect, samples, hr } =
+  const { devices, selected, subscribe, disconnect, samples, hr, sendStepChange } =
     useHeartRate("http://127.0.0.1:5000");
+
+  // ==== キャリブレーションフェーズ（バックグラウンドで実行） ====
+  const CALIBRATION_SAMPLES_NEEDED = 30; // 30サンプル（約30秒）
+  const [calibrationComplete, setCalibrationComplete] = useState(false);
 
   // ==== ローカル制御用の状態（FakeSupportScamScreen向け） ====
   const [showQuiz, setShowQuiz] = useState(true);
-  const [quiz2WrongCount, setQuiz2WrongCount] = useState(0);
-  const [retryAfterWrongQuiz2, setRetryAfterWrongQuiz2] = useState(false);
 
   // クイズ正答数管理
   const [quizCorrectCount, setQuizCorrectCount] = useState(0);
@@ -51,13 +53,28 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   const [sectionHRRecords, setSectionHRRecords] = useState<SectionHR[]>([]);
   const prevSectionRef = useRef<string | null>(null);
 
-  // === quiz1 で心拍取得を開始 ===
+  // === デバイスが検出されたら自動で心拍計測開始 ===
+  const subscribeAttempted = useRef(false);
   useEffect(() => {
-    if (currentId === "quiz1" && devices.length > 0 && !selected) {
-      console.log("[HR] quiz1開始 → 心拍計測開始");
+    if (devices.length > 0 && !selected && !subscribeAttempted.current) {
+      subscribeAttempted.current = true;
       subscribe(devices[0]).catch(console.error);
     }
-  }, [currentId, devices, selected, subscribe]);
+  }, [devices, selected, subscribe]);
+
+  // === キャリブレーション完了の判定（バックグラウンド） ===
+  useEffect(() => {
+    if (!calibrationComplete && samples.length >= CALIBRATION_SAMPLES_NEEDED) {
+      // ベースライン心拍数を計算
+      const calibrationSamples = samples.slice(0, CALIBRATION_SAMPLES_NEEDED);
+      const sum = calibrationSamples.reduce((acc, s) => acc + s.hr, 0);
+      const avg = Math.round(sum / calibrationSamples.length);
+
+      console.log("[HR] キャリブレーション完了（バックグラウンド）");
+      console.log(`[HR] ベースライン心拍数: ${avg} bpm`);
+      setCalibrationComplete(true);
+    }
+  }, [calibrationComplete, samples, CALIBRATION_SAMPLES_NEEDED]);
 
   // === 最後（endなど）で切断 ===
   useEffect(() => {
@@ -84,12 +101,16 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
       // 前のセクションの終了心拍数を記録
       if (prevSection !== null) {
         setSectionHRRecords((prev) => {
-          const updated = [...prev];
-          const lastRecord = updated[updated.length - 1];
+          const lastIndex = prev.length - 1;
+          const lastRecord = prev[lastIndex];
           if (lastRecord && lastRecord.sectionId === prevSection) {
-            lastRecord.endHR = hr;
+            // Immutable update: create new array with new object
+            return [
+              ...prev.slice(0, lastIndex),
+              { ...lastRecord, endHR: hr }
+            ];
           }
-          return updated;
+          return prev;
         });
       }
 
@@ -103,15 +124,33 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
         },
       ]);
 
+      // hrserverにステップ変更を通知
+      if (prevSection !== null && selected) {
+        // キャリブレーション完了後のみ送信（ステップIDをそのまま表示）
+        sendStepChange(currentId, currentId);
+      }
+
       prevSectionRef.current = currentId;
     }
-  }, [currentId, hr]);
+  }, [currentId, hr, selected, sendStepChange]);
 
-  // ===  スコア計算 ===
-  const scoreDetail = useMemo(() => computeHeartRateScore(samples), [samples]);
+  // ベースライン心拍数の計算（最初の30サンプルから）
+  const baseHR = useMemo(() => {
+    if (samples.length >= CALIBRATION_SAMPLES_NEEDED) {
+      const calibrationSamples = samples.slice(0, CALIBRATION_SAMPLES_NEEDED);
+      const sum = calibrationSamples.reduce((acc, s) => acc + s.hr, 0);
+      const avg = sum / calibrationSamples.length;
+      return Math.round(avg);
+    }
+    // サンプルが十分に集まっていない場合は、現在のサンプルの平均を使用
+    if (samples.length > 0) {
+      const sum = samples.reduce((acc, s) => acc + s.hr, 0);
+      const avg = sum / samples.length;
+      return Math.round(avg);
+    }
+    return 70; // デフォルト値
+  }, [samples, CALIBRATION_SAMPLES_NEEDED]);
 
-  // 仮データ（本番はpropsやcontextから取得）
-  const baseHR = 70; // 例: 平常時心拍
   const peakHR = hr ?? 90; // 例: 体験時心拍
 
   // 回復時間の計算（平常時心拍数±5bpmを回復とみなす）
@@ -123,8 +162,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   // FakeSupportScamScreen から「正解」通知（ESC長押し）を受けたら
   const handleQuiz2Result = (
     correct: boolean,
-    sec: number,
-    isFirstTry: boolean
+    sec: number
   ) => {
     setActionSeconds(sec);
     if (!demo) return;
@@ -146,6 +184,7 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
   if (err) {
     return <div className="p-6 text-red-600">エラー: {err}</div>;
   }
+
   if (!quiz && !video && !demo && currentId == "end") {
     return (
       <div className="relative w-screen h-screen overflow-y-auto flex items-start justify-center bg-slate-900/70 py-6">
@@ -209,10 +248,6 @@ export default function SecurityQuizClient({ dataPath }: { dataPath: string }) {
           <FakeSupportScamScreen
             onResult={handleQuiz2Result}
             setShowQuiz={setShowQuiz}
-            setCurrentId={setCurrentId}
-            setRetryAfterWrongQuiz2={setRetryAfterWrongQuiz2}
-            wrongCount={quiz2WrongCount}
-            setWrongCount={setQuiz2WrongCount}
             isFirstTryCorrect={isFirstTryCorrect}
             setFirstTryCorrect={setIsFirstTryCorrect}
           />

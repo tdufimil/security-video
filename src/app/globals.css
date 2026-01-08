@@ -1,2 +1,15 @@
 @import "tailwindcss";
 
+/* レーダーチャートの軸ラベルを大きく見やすく */
+.recharts-polar-angle-axis-tick text {
+  font-size: 24px !important;
+  font-weight: bold !important;
+  fill: #FFFFFF !important;
+  font-family: Arial, sans-serif !important;
+}
+
+.recharts-polar-radius-axis-tick text {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  fill: rgba(165, 243, 252, 0.95) !important;
+}

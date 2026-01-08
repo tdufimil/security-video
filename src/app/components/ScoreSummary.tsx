@@ -36,6 +36,30 @@ type Props = {
   sectionHistory: string[];
 };
 
+// カスタム軸ラベルコンポーネント
+const CustomAxisTick = ({ payload, x, y, textAnchor }: any) => {
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={16}
+        textAnchor={textAnchor}
+        fill="#FFFFFF"
+        style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          fontFamily: 'Arial, sans-serif',
+          textShadow: '0 0 10px rgba(0,0,0,0.9)',
+          WebkitTextStroke: '0.5px rgba(0,0,0,0.5)'
+        }}
+      >
+        {payload.value}
+      </text>
+    </g>
+  );
+};
+
 export default function ScoreSummary(props: Props) {
   //  初回スナップショット（以降固定）
   const [frozen] = useState(() => ({
@@ -122,21 +146,27 @@ export default function ScoreSummary(props: Props) {
         {/* 中段：レーダーチャート */}
         <div className="px-6 pb-4">
           <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/50 p-4 md:p-6 shadow-[inset_0_0_20px_rgba(34,211,238,0.08)]">
-            <div className="h-[320px] w-full">
+            <div className="h-[500px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={data} outerRadius="75%">
+                <RadarChart data={data} outerRadius="60%">
                   <PolarGrid
                     gridType="polygon"
-                    stroke="rgba(34,211,238,0.25)"
-                    strokeDasharray="3 3"
+                    stroke="rgba(34,211,238,0.35)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 4"
                   />
                   <PolarAngleAxis
                     dataKey="axis"
-                    tick={{ fill: "rgba(190,242,255,0.95)", fontSize: 12 }}
+                    tick={<CustomAxisTick />}
+                    tickLine={false}
                   />
                   <PolarRadiusAxis
                     domain={[0, 100]}
-                    tick={{ fill: "rgba(165,243,252,0.7)", fontSize: 10 }}
+                    tick={{
+                      fill: "rgba(165,243,252,0.95)",
+                      fontSize: 16,
+                      fontWeight: 700
+                    }}
                     stroke="rgba(34,211,238,0.25)"
                   />
                   <Tooltip
@@ -151,9 +181,15 @@ export default function ScoreSummary(props: Props) {
                   <Radar
                     name="Score"
                     dataKey="value"
-                    stroke="rgba(16,185,129,0.9)"
-                    fill="rgba(16,185,129,0.35)"
-                    dot
+                    stroke="rgba(16,185,129,0.95)"
+                    strokeWidth={2}
+                    fill="rgba(16,185,129,0.4)"
+                    dot={{
+                      r: 6,
+                      fill: "rgba(16,185,129,1)",
+                      stroke: "rgba(255,255,255,0.8)",
+                      strokeWidth: 2
+                    }}
                   />
                 </RadarChart>
               </ResponsiveContainer>

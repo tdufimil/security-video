@@ -27,9 +27,12 @@ export function useHeartRate(baseUrl: string) {
       onDevices: (names) => setDevices(names),
       onData: pushSample,
     });
-    // デバイス検出をトリガ
-    client.fetchDevices().catch(() => { /* ignore */ });
     setConnected(true);
+
+    // Request device list once after connection
+    setTimeout(() => {
+      client.fetchDevices().catch(() => { /* ignore */ });
+    }, 100);
 
     return () => {
       client.disconnect();
@@ -51,6 +54,12 @@ export function useHeartRate(baseUrl: string) {
     setConnected(false);
   }, []);
 
+  const sendStepChange = useCallback((stepId: string, stepName?: string) => {
+    if (clientRef.current) {
+      clientRef.current.sendStepChange(stepId, stepName);
+    }
+  }, []);
+
   const hr = samples.length ? samples[samples.length - 1].hr : null;
 
   return {
@@ -63,5 +72,6 @@ export function useHeartRate(baseUrl: string) {
     // 操作
     subscribe,
     disconnect,
+    sendStepChange,
   };
 }

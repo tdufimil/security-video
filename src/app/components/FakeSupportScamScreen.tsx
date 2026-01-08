@@ -5,14 +5,9 @@ import { useEffect, useRef, useState } from "react";
 type Props = {
   onResult: (
     correct: boolean,
-    actionSeconds: number,
-    isFirstTry: boolean
+    actionSeconds: number
   ) => void;
   setShowQuiz: (show: boolean) => void;
-  setCurrentId: (id: string) => void;
-  setRetryAfterWrongQuiz2: (val: boolean) => void;
-  wrongCount: number;
-  setWrongCount: (count: number) => void;
   isFirstTryCorrect: number;
   setFirstTryCorrect: (val: number) => void;
 };
@@ -20,10 +15,6 @@ type Props = {
 export default function FakeSupportScamScreen({
   onResult,
   setShowQuiz,
-  setCurrentId,
-  setRetryAfterWrongQuiz2,
-  wrongCount,
-  setWrongCount,
   isFirstTryCorrect,
   setFirstTryCorrect,
 }: Props) {
@@ -41,7 +32,6 @@ export default function FakeSupportScamScreen({
 
   // ==== ref ====
   const startAtRef = useRef<number>(Date.now());
-  const firstTryRef = useRef(true);
   const holdTimerRef = useRef<number | null>(null);
   const holdingRef = useRef(false);
   const finishedRef = useRef(false); // 正解/不正解が確定したら二重発火防止
@@ -74,7 +64,7 @@ export default function FakeSupportScamScreen({
       if (document.fullscreenElement) await exitFullscreen();
     } finally {
       setShowQuiz(false);
-      onResultRef.current(true, actionSeconds, firstTryRef.current);
+      onResultRef.current(true, actionSeconds);
     }
   };
 
@@ -88,7 +78,7 @@ export default function FakeSupportScamScreen({
     } finally {
       setShowQuiz(false);
       setFirstTryCorrect(25);
-      onResultRef.current(false, actionSeconds, firstTryRef.current);
+      onResultRef.current(false, actionSeconds);
     }
   };
 

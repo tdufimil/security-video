@@ -64,6 +64,14 @@ export class HeartRateClient {
       }
     });
 
+    this.socket.on("subscribeSuccess", (payload: { message: string; deviceName: string }) => {
+      // console.log(`[HR] Subscribe success: ${payload.deviceName} - ${payload.message}`);
+    });
+
+    this.socket.on("subscribeError", (payload: { error: string }) => {
+      // console.error(`[HR] Subscribe error: ${payload.error}`);
+    });
+
     this.socket.on("disconnect", () => {
       // console.log("[HR] socket disconnected");
     });
@@ -71,10 +79,23 @@ export class HeartRateClient {
 
   async subscribe(name: string) {
     this.deviceName = name;
-    const res = await fetch(
-      `${this.baseUrl}/api/subscribe/${encodeURIComponent(name)}`
-    );
-    if (!res.ok) throw new Error(`subscribe failed: ${res.status}`);
+
+    // Use Socket.IO event instead of REST API to avoid disconnection issues
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('subscribe', { deviceName: name });
+    } else {
+      throw new Error('Socket not connected');
+    }
+  }
+
+  sendStepChange(stepId: string, stepName?: string) {
+    if (this.socket && this.socket.connected) {
+      this.socket.emit("stepChange", {
+        stepId,
+        stepName: stepName || stepId,
+        timestamp: Date.now(),
+      });
+    }
   }
 
   disconnect() {
